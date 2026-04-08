@@ -1,0 +1,5 @@
+abstract class AppRoutes {
+  static const LOGIN = '/login';
+  static const MAIN = '/main';
+  static const EDITOR = '/editor';
+}
