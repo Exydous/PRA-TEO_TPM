@@ -1,30 +1,32 @@
-﻿Pilihan yang bagus untuk istirahat sejenak agar pikiran kembali segar besok. Berikut adalah rekapitulasi progres proyek "Pro Editor" kamu agar kamu bisa langsung tancap gas saat memulai kembali:
-✅ Fitur yang Sudah Selesai (Ready)
+﻿✅ Fitur yang Sudah Selesai (Ready)
 1. Fondasi & Navigasi
-* Sistem Auth: Layar Login sudah terintegrasi.
-* Bottom Navigation: Navigasi utama antara Galeri, Utilities, Feedback, dan Profile.
-* Image Picker: Fungsi mengambil foto dari galeri HP ke dalam aplikasi.
+Sistem Auth: Layar Login sudah terintegrasi.
+Bottom Navigation: Navigasi utama antara Galeri, Utilities, Feedback, dan Profile.
+Image Picker: Fungsi mengambil foto dari galeri HP ke dalam aplikasi.
 2. Core Editor (Layar Utama Edit)
-* UI Editor Profesional: Mode layar penuh dengan latar belakang hitam ala Lightroom.
-* Live Preview: Foto langsung merespons perubahan slider melalui Color Matrix.
-* Alat Crop & Rotasi: Integrasi image_cropper dengan berbagai pilihan rasio (1:1, 16:9, dll) dan fungsi putar foto.
-* Menu Light: Slider Exposure dan Contrast yang berfungsi stabil.
-* Menu Color: Tombol Black & White, slider Temperature (Kelvin), dan Saturation.
+UI Editor Profesional: Mode layar penuh dengan latar belakang hitam ala Lightroom.
+Live Preview: Foto langsung merespons perubahan slider melalui Color Matrix.
+Alat Crop & Rotasi: Integrasi image_cropper dengan berbagai pilihan rasio dan fungsi putar.
+Menu Light & Color: Slider Exposure, Contrast, Temperature, Saturation, dan tombol Black & White.
 3. Utilities: Mini-Game "Color Match"
-* Gameplay Memori: Fase mengingat warna selama 5 detik sebelum menebak.
-* Logika HSL: Tebakan berdasarkan Hue, Saturation, dan Lightness (lebih intuitif).
-* UI Presisi: Tampilan warna target besar, label "YOUR COLOR", dan slider horizontal yang rapi.
-* Custom Submit: Tombol submit menggunakan ikon bullseye (target) dengan posisi yang memiliki gap aman dari bawah layar.
-* Sistem Skor: Kalkulasi akurasi per ronde (4 ronde) dan layar Final Score/Leaderboard.
-________________
-🚧 Fitur yang Belum Dibuat (Misi Besok)
-1. Sensor Goyang (Shake to Reset) — Prioritas Utama TPM
-* Implementasi package sensors_plus.
-* Logika untuk mendeteksi guncangan HP saat di layar Editor guna mereset semua slider (Exposure, Saturation, dll) kembali ke titik nol.
-2. Simpan Foto (Save to Gallery)
-* Menghubungkan tombol centang (✔️) di pojok kanan atas Editor.
-* Logika untuk memproses gambar hasil editan dan menyimpannya secara permanen ke galeri foto pengguna.
-3. Konten Tab Tambahan
-* Pengembangan UI/Fungsi sederhana untuk tab Feedback dan Profile agar aplikasi terasa utuh saat dikumpulkan.
-________________
-Semua file dan kodingan sudah rapi dan bebas dari error "Dead Code". Sekarang, silakan tutup laptopmu dan istirahat dengan tenang. Sampai jumpa di sesi berikutnya! 🌙✨
+Gameplay & Logika: Fase memori 5 detik, tebakan berbasis HSL (lebih intuitif).
+UI Presisi: Custom slider dan tombol submit dengan ikon bullseye yang posisinya aman dari batas bawah layar.
+Sistem Skor: Kalkulasi akurasi per ronde (4 ronde) dan layar Final Score.
+4. Utilities: Photographer Assistant (LBS & API) ✨ (Tambahan Baru)
+Location-Based Services (LBS): Berhasil mengambil koordinat GPS langsung dari perangkat menggunakan geolocator beserta konfigurasi permission lokasi di iOS (Info.plist).
+Web Service/API 1 (Sunrise-Sunset): Terhubung dengan API untuk menghitung waktu Golden Hour secara real-time berdasarkan titik GPS pengguna.
+Sistem Anti-Gagal (Fallback): Kodingan Spot Finder sudah disiapkan dan diuji menggunakan Data Dummy, memastikan aplikasi tetap berjalan sempurna saat dipresentasikan meskipun tanpa API Key.
+
+🚧 Fitur yang Belum Dibuat (Misi Selanjutnya)
+1. Sensor Goyang (Shake to Reset) — Syarat Wajib TPM
+Implementasi package sensors_plus.
+Logika mendeteksi guncangan HP di layar Editor untuk mereset semua slider kembali ke nol.
+2. Integrasi API Lanjutan (Opsional untuk Nilai Plus) ✨ (Tambahan Baru)
+Geoapify API: Mengganti Data Dummy di fitur Photographer Assistant agar memunculkan spot foto yang 100% akurat.
+Gemini AI API: Membuat fitur AI Caption & Hashtag Generator berbasis foto.
+FreeCurrency API: Membuat kalkulator tarif (Rate Card) di menu Profile.
+3. Simpan Foto (Save to Gallery)
+Menghubungkan tombol centang (✔️) untuk merender hasil akhir dan menyimpannya secara permanen ke galeri HP.
+4. Konten Tab Tambahan
+Pengembangan UI/Fungsi sederhana untuk tab Feedback dan Profile. 
+
