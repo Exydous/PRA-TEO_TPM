@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 // PENTING: Sesuaikan path import ini jika ada error garis merah
 import 'color_match/screens/color_match_screen.dart'; 
+import '../photographer_assistant/screens/assistant_screen.dart';
 
 class UtilitiesScreen extends StatelessWidget {
   const UtilitiesScreen({super.key});
@@ -19,10 +20,10 @@ class UtilitiesScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            const Text(
-              "Alat & Permainan",
-              style: TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.bold),
-            ),
+            // const Text(
+            //   "Alat & Permainan",
+            //   style: TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.bold),
+            // ),
             const SizedBox(height: 12),
             
             // --- KOTAK MENU UNTUK GAME TEBAK WARNA ---
@@ -55,6 +56,22 @@ class UtilitiesScreen extends StatelessWidget {
               ),
             ),
             
+            // Di dalam ListView pada utilities_screen.dart:
+
+              Card(
+                color: const Color(0xFF1A1A1A),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: Colors.orange.withOpacity(0.2), shape: BoxShape.circle),
+                    child: const Icon(Icons.auto_awesome, color: Colors.orangeAccent),
+                  ),
+                  title: const Text('Photographer Assistant', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Cek Golden Hour & Spot foto terdekat', style: TextStyle(color: Colors.white70)),
+                  onTap: () => Get.to(() => const AssistantScreen()),
+                ),
+              ),
             // Nanti jika ada fitur utility lain (seperti Golden Hour), bisa ditambahkan Card baru di bawah sini
           ],
         ),
