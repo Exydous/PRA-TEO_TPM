@@ -5,6 +5,12 @@
         android:label="tugas_akhir"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <meta-data 
+            android:name="dev.fluttercommunity.shake_gesture_android.SHAKE_FORCE" 
+            android:value="4" />
+        <meta-data 
+            android:name="dev.fluttercommunity.shake_gesture_android.MIN_NUM_SHAKES" 
+            android:value="2" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

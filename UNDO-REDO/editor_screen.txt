@@ -25,17 +25,10 @@ class EditorScreen extends StatelessWidget {
         ),
         title: const Text('Editor', style: TextStyle(color: Colors.white, fontSize: 16)),
         actions: [
+          // --- DIMODIFIKASI: Menghubungkan fungsi Undo dan Redo ---
           IconButton(icon: const Icon(Icons.undo, color: Colors.white70), onPressed: controller.undo),
           IconButton(icon: const Icon(Icons.redo, color: Colors.white70), onPressed: controller.redo),
-          
-          // --- DITAMBAHKAN: Tombol Reset Manual ---
-          IconButton(
-            icon: const Icon(Icons.restart_alt, color: Colors.orangeAccent), 
-            tooltip: 'Reset Semua',
-            onPressed: () => controller.resetEffects(fromSensor: false),
-          ),
-          
-          IconButton(icon: const Icon(Icons.check, color: AppColors.primary), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.check, color: AppColors.primary), onPressed: () {}), // Tombol save belum aktif
         ],
       ),
       body: SafeArea(
@@ -100,7 +93,6 @@ class EditorScreen extends StatelessWidget {
                     ],
                   ),
                 )),
-                
           ],
         ),
       ),
@@ -229,7 +221,7 @@ class EditorScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            _buildSliderRow('Temp', controller.temperature, -100, 100, controller: controller),
+            _buildSliderRow('Temp', controller.temperature, 2000, 10000, suffix: 'K', controller: controller),
             _buildSliderRow('Saturation', controller.saturation, -100, 100, controller: controller),
           ],
         );
