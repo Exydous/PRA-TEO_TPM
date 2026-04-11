@@ -1,59 +1,204 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../core/constants/app_colors.dart';
-import '../controllers/editor_controller.dart';
+import '../controllers/editor_controller.dart'; 
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Memanggil (Inject) EditorController ke layar ini
-    final EditorController controller = Get.put(EditorController());
+    final EditorController editorCtrl = Get.put(EditorController());
+    final DraftController draftCtrl = Get.put(DraftController(), permanent: true);
 
     return Scaffold(
-      body: Center(
+      backgroundColor: Colors.black,
+      
+      // --- APP BAR DINAMIS ---
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: Obx(() => AppBar(
+          backgroundColor: draftCtrl.isSelectionMode.value ? const Color(0xFF1A1A1A) : Colors.black,
+          elevation: 0,
+          title: Text(
+            draftCtrl.isSelectionMode.value 
+                ? '${draftCtrl.selectedPaths.length} Dipilih' 
+                : 'Galeri & Workspace', 
+            style: const TextStyle(color: Colors.white)
+          ),
+          leading: draftCtrl.isSelectionMode.value
+              ? IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: draftCtrl.cancelSelection,
+                )
+              : null,
+          actions: draftCtrl.isSelectionMode.value
+              ? [
+                  if (draftCtrl.selectedPaths.length == 1)
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.white),
+                      tooltip: 'Ganti Nama',
+                      onPressed: draftCtrl.showRenameDialog,
+                    ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.redAccent),
+                    tooltip: 'Hapus Draft',
+                    onPressed: draftCtrl.deleteSelectedDrafts,
+                  ),
+                  const SizedBox(width: 8),
+                ]
+              : [],
+        )),
+      ),
+
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(
-              Icons.camera_outlined,
-              size: 100,
-              color: AppColors.primary,
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Empty Workspace',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textMain,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Please select an image to start editing.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 48),
-            ElevatedButton.icon(
-              // --- PERBAIKAN: Memanggil fungsi baru yang gabungan pick & navigate ---
-              onPressed: controller.pickImageAndOpenEditor,
-              icon: const Icon(Icons.add_photo_alternate_outlined, size: 28),
-              label: const Text('Choose from Gallery', style: TextStyle(fontSize: 16)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            // 1. TOMBOL BIKIN BARU
+            InkWell(
+              onTap: () {
+                if (draftCtrl.isSelectionMode.value) draftCtrl.cancelSelection();
+                editorCtrl.pickImageAndOpenEditor();
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A1A),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Column(
+                  children: const [
+                    Icon(Icons.add_photo_alternate, size: 48, color: Colors.blueAccent),
+                    SizedBox(height: 12),
+                    Text('Edit Foto Baru', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  ],
                 ),
               ),
             ),
+            
+            const SizedBox(height: 32),
+            
+            // 2. AREA WORKSPACE 
+            Obx(() {
+              if (draftCtrl.savedDrafts.isEmpty) {
+                return const SizedBox.shrink(); 
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Workspace Terakhir', style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  
+                  ListView.builder(
+                    physics: const NeverScrollableScrollPhysics(), 
+                    shrinkWrap: true, 
+                    itemCount: draftCtrl.savedDrafts.length,
+                    itemBuilder: (context, index) {
+                      final draft = draftCtrl.savedDrafts[index];
+                      
+                      // --- KUNCI PERBAIKAN: PASANG OBX KHUSUS DI SETIAP KARTU ---
+                      return Obx(() {
+                        // Variabel reaktif sekarang dibaca langsung oleh masing-masing kartu
+                        final isSelected = draftCtrl.selectedPaths.contains(draft['imagePath']);
+                        final isSelectionMode = draftCtrl.isSelectionMode.value;
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.orangeAccent.withOpacity(0.1) : const Color(0xFF1A1A1A),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isSelected ? Colors.orangeAccent : Colors.orangeAccent.withOpacity(0.5),
+                              width: isSelected ? 2 : 1, 
+                            ),
+                          ),
+                          child: Stack(
+                            children: [
+                              // LAYER 1: KARTU UTAMA (Tombol > tetap ada di sini)
+                              InkWell(
+                                borderRadius: BorderRadius.circular(16),
+                                onLongPress: () {
+                                  if (!isSelectionMode) {
+                                    draftCtrl.startSelection(draft['imagePath']);
+                                  }
+                                },
+                                onTap: () {
+                                  if (isSelectionMode) {
+                                    draftCtrl.toggleSelection(draft['imagePath']);
+                                  } else {
+                                    editorCtrl.resumeDraft(draft);
+                                  }
+                                },
+                                child: Row(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: const BorderRadius.horizontal(left: Radius.circular(15)), 
+                                      child: Image.file(
+                                        File(draft['imagePath']),
+                                        width: 100, 
+                                        height: 120,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => Container(width: 100, height: 120, color: Colors.grey[900], child: const Icon(Icons.broken_image, color: Colors.white54)),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              draft['fileName'] ?? 'Tanpa Nama',
+                                              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                              maxLines: 2, 
+                                              overflow: TextOverflow.ellipsis, 
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text('Exposure: ${draft['exposure'].toInt()}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                                            Text('Saturation: ${draft['saturation'].toInt()}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    // Ikon Panah (>) SELALU AMAN di kanan tengah
+                                    const Padding(
+                                      padding: EdgeInsets.only(right: 16.0),
+                                      child: Icon(Icons.chevron_right, color: Colors.orangeAccent),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // LAYER 2: KOTAK CENTANG (Hanya muncul jika mode seleksi aktif)
+                              if (isSelectionMode)
+                                Positioned(
+                                  top: 10,
+                                  right: 10,
+                                  child: IgnorePointer(
+                                    child: isSelected
+                                        ? const Icon(Icons.check_box, color: Colors.orangeAccent, size: 28)
+                                        : const Icon(Icons.check_box_outline_blank, color: Colors.white54, size: 28),
+                                  ),
+                                ),
+                                
+                            ],
+                          ),
+                        );
+                      }); 
+                      // --- AKHIR DARI OBX KHUSUS KARTU ---
+
+                    },
+                  ),
+                ],
+              );
+            }),
           ],
         ),
       ),

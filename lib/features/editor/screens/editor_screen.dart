@@ -21,21 +21,39 @@ class EditorScreen extends StatelessWidget {
         backgroundColor: Colors.black,
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.white),
-          onPressed: controller.cancelEditing,
+          onPressed: controller.cancelEditing, // Akan memicu saveToWorkspace (Draft)
         ),
-        title: const Text('Editor', style: TextStyle(color: Colors.white, fontSize: 16)),
+        
+        title: Row(
+          children: [
+            const Text('Editor', style: TextStyle(color: Colors.white, fontSize: 16)),
+            const SizedBox(width: 8),
+            Obx(() {
+              bool isDark = controller.luxValue.value < 15;
+              return Icon(
+                isDark ? Icons.nightlight_round : Icons.wb_sunny,
+                color: isDark ? Colors.amber : Colors.yellow,
+                size: 16,
+              );
+            }),
+          ],
+        ),
+        
         actions: [
           IconButton(icon: const Icon(Icons.undo, color: Colors.white70), onPressed: controller.undo),
           IconButton(icon: const Icon(Icons.redo, color: Colors.white70), onPressed: controller.redo),
           
-          // --- DITAMBAHKAN: Tombol Reset Manual ---
           IconButton(
             icon: const Icon(Icons.restart_alt, color: Colors.orangeAccent), 
             tooltip: 'Reset Semua',
             onPressed: () => controller.resetEffects(fromSensor: false),
           ),
           
-          IconButton(icon: const Icon(Icons.check, color: AppColors.primary), onPressed: () {}),
+          // --- DIMODIFIKASI: Menghubungkan tombol ✔️ ke fungsi saveToGallery ---
+          IconButton(
+            icon: const Icon(Icons.check, color: AppColors.primary), 
+            onPressed: controller.saveToGallery, // <--- INI YANG DIUBAH
+          ),
         ],
       ),
       body: SafeArea(
@@ -49,13 +67,18 @@ class EditorScreen extends StatelessWidget {
                   final imageFile = controller.selectedImage.value;
                   if (imageFile == null) return const SizedBox.shrink(); 
 
-                  return ColorFiltered(
-                    colorFilter: ColorFilter.matrix(controller.combinedColorMatrix),
-                    child: Image.file(
-                      imageFile, 
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => const Center(
-                        child: Text("Gagal memuat gambar", style: TextStyle(color: Colors.white54)),
+                  return Center(
+                    child: RepaintBoundary(
+                      key: controller.exportKey, 
+                      child: ColorFiltered(
+                        colorFilter: ColorFilter.matrix(controller.combinedColorMatrix),
+                        child: Image.file(
+                          imageFile, 
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => const Center(
+                            child: Text("Gagal memuat gambar", style: TextStyle(color: Colors.white54)),
+                          ),
+                        ),
                       ),
                     ),
                   );
@@ -167,7 +190,6 @@ class EditorScreen extends StatelessWidget {
           ),
         ),
         
-        // 2 tab untuk sub-menu edit (Light & Color)
         Container(
           height: 50,
           decoration: const BoxDecoration(border: Border(top: BorderSide(color: Colors.white12))),
@@ -208,7 +230,6 @@ class EditorScreen extends StatelessWidget {
       case EditSubMenu.light:
         return Column(
           children: [
-            // --- DIMODIFIKASI: Mengirimkan fungsi saveState ke slider pembantu ---
             _buildSliderRow('Exposure', controller.exposure, -100, 100, controller: controller),
             _buildSliderRow('Contrast', controller.contrast, -100, 100, controller: controller),
           ],
@@ -222,7 +243,7 @@ class EditorScreen extends StatelessWidget {
                 OutlinedButton(
                   onPressed: () {
                     controller.isBlackAndWhite.toggle();
-                    controller.saveState(); // --- DITAMBAHKAN: Simpan state saat B&W ditekan ---
+                    controller.saveState(); 
                   }, 
                   child: Obx(() => Text(controller.isBlackAndWhite.value ? 'B&W (On)' : 'B&W (Off)'))
                 ),
@@ -236,7 +257,6 @@ class EditorScreen extends StatelessWidget {
     }
   }
 
-  // --- DIMODIFIKASI: Menambahkan parameter controller dan fungsi onChangeEnd ---
   Widget _buildSliderRow(String label, RxDouble rxValue, double min, double max, {String suffix = '', required EditorController controller}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -257,8 +277,8 @@ class EditorScreen extends StatelessWidget {
                 value: rxValue.value,
                 min: min,
                 max: max,
-                onChanged: (val) => rxValue.value = val, // UI langsung berubah
-                onChangeEnd: (val) => controller.saveState(), // --- DITAMBAHKAN: Simpan ke memori saat jari dilepas ---
+                onChanged: (val) => rxValue.value = val, 
+                onChangeEnd: (val) => controller.saveState(), 
               ),
             ),
           ),
