@@ -1,64 +1,49 @@
-﻿📊 Laporan Progress Tugas Akhir: Aplikasi Photo Editor LBS & AI
-✅ Fitur yang SUDAH SELESAI (Siap Presentasi)
+﻿**✅ Fitur yang Sudah Selesai (Ready)**
 
 1. Fondasi & Navigasi
 
-Sistem Auth: Layar Login sudah terintegrasi.
+    - Sistem Auth: Layar Login sudah terintegrasi.
+    - Bottom Navigation: Navigasi utama antara Galeri, Utilities, Feedback, dan Profile.
+    - Image Picker: Fungsi mengambil foto dari galeri HP ke dalam aplikasi.
 
-Bottom Navigation: Navigasi utama (Galeri, Utilities, Feedback, Profile).
+2. Core Editor & Sensor Pintar (Layar Utama Edit)
 
-Image Picker: Fungsi mengambil foto dari galeri HP ke dalam aplikasi.
+    - UI Editor Profesional: Mode layar penuh dengan latar belakang hitam ala Lightroom.
+    - Live Preview: Foto langsung merespons perubahan slider melalui Color Matrix.
+    - Alat Crop & Rotasi: Integrasi image_cropper dengan berbagai pilihan rasio dan fungsi putar.
+    - Menu Light & Color: Slider Exposure, Contrast, Temperature, Saturation, dan tombol Black & White.
+    - **[UPDATE]** Sensor Goyang (Shake to Reset): Mendeteksi guncangan HP untuk mereset semua efek slider secara otomatis.
+    - **[UPDATE]** Sensor Cahaya Ambient: Peringatan cerdas ("Ruangan Terlalu Gelap") saat pengguna mengedit di ruangan yang gelap.
 
-2. Core Editor (Layar Utama Edit) & Kalibrasi Tingkat Lanjut
+3. Sistem Manajemen Multi-Workspace & Ekspor (Selesai Hari Ini!)
 
-UI Editor Profesional: Mode layar penuh, latar hitam ala Adobe Lightroom.
-
-Alat Crop & Rotasi: Integrasi image_cropper dengan berbagai pilihan rasio.
-
-Menu Light & Color: Slider Exposure, Contrast, Temperature, Saturation, dan tombol B&W.
-
-Live Matrix Rendering: Foto langsung merespons perubahan secara akurat.
-
-Kalibrasi Lightroom-Grade: Sistem Contrast sudah dilengkapi midpoint offset (tidak bocor/hitam total), dan sistem Temperature sudah menggunakan skala -100 ke 100 dengan keseimbangan Red/Blue.
-
-Sistem History (Undo/Redo): Merekam setiap perubahan saat jari dilepas dari slider (onChangeEnd), memungkinkan pengguna mundur/maju dalam pengeditan.
-
-3. Sensor Perangkat Keras (Syarat Wajib TPM) 🔥
-
-Sistem Guncangan Hybrid: Menggunakan shake_gesture untuk membaca sinyal accelerometer native.
-
-Cross-Platform Ready: Berfungsi sempurna saat di-shake di iOS Simulator (Cmd+Ctrl+Z), dan dikonfigurasi secara presisi (4 Newton, 2 goyangan) untuk HP Android fisik.
-
-Fungsi "Shake to Reset": Mengguncang HP akan mereset efek foto seketika, namun tetap tersimpan di dalam memori History (sehingga bisa di-Undo jika tidak sengaja).
+    - **[UPDATE]** Penyimpanan Multi-Draft: Menyimpan progres banyak editan sekaligus ke dalam brankas memori lokal (SharedPreferences).
+    - **[UPDATE]** Home Screen Dinamis: Menampilkan daftar riwayat draft editan pengguna dengan layout responsif.
+    - **[UPDATE]** Kontrol Seleksi (Hold to Select): Pengguna dapat menekan tahan draft untuk memunculkan mode seleksi dengan Checkbox.
+    - **[UPDATE]** Rename & Delete: Fitur pop-up dialog untuk mengganti nama draft spesifik dan opsi menghapus draft yang dipilih.
+    - **[UPDATE]** Export to Gallery (Simpan Foto): Merender dan menyimpan foto hasil editan resolusi tinggi ke galeri fisik HP menggunakan image_gallery_saver_plus.
 
 4. Utilities: Mini-Game "Color Match"
 
-Gameplay & Logika: Fase memori 5 detik, tebakan berbasis HSL.
+    - Gameplay & Logika: Fase memori 5 detik, tebakan berbasis HSL (lebih intuitif).
+    - UI Presisi: Custom slider dan tombol submit dengan ikon bullseye yang posisinya aman dari batas bawah layar.
+    - Sistem Skor: Kalkulasi akurasi per ronde (4 ronde) dan layar Final Score.
 
-UI Presisi: Custom slider dan tombol submit (ikon bullseye).
+5. Utilities: Photographer Assistant (LBS & API)
 
-Sistem Skor: Kalkulasi akurasi per ronde (4 ronde) dan layar Final Score.
+    - Location-Based Services (LBS): Berhasil mengambil koordinat GPS langsung dari perangkat menggunakan geolocator.
+    - Web Service/API 1 (Sunrise-Sunset): Terhubung dengan API untuk menghitung waktu Golden Hour secara real-time.
+    - Sistem Anti-Gagal (Fallback): Spot Finder sudah disiapkan menggunakan Data Dummy.
 
-5. Utilities: Photographer Assistant (LBS & API 1)
+**🚧 Fitur yang Belum Dibuat (Misi Selanjutnya)**
 
-Location-Based Services (LBS): Berhasil mengambil koordinat GPS perangkat dengan izin lokasi.
+1. Integrasi API Lanjutan (Opsional untuk Nilai Plus)
 
-Web Service (Sunrise-Sunset API): Menghitung waktu Golden Hour real-time berdasarkan titik GPS.
+    - Geoapify API: Mengganti Data Dummy di fitur Photographer Assistant agar memunculkan spot foto yang akurat.
+    - Gemini AI API: Membuat fitur AI Caption & Hashtag Generator berbasis foto.
+    - FreeCurrency API: Membuat kalkulator tarif (Rate Card) di menu Profile.
 
-🚧 Fitur yang BELUM DIBUAT (Misi Selanjutnya)
+2. Pengembangan Konten Tab Sampingan
 
-1. Ekspor & Simpan (Prioritas Utama Berikutnya)
-
-Save to Gallery: Mengaktifkan tombol centang (✔️) di layar Editor untuk merender hasil matriks ke dalam file .jpg sungguhan dan menyimpannya ke galeri HP pengguna (galery_saver atau image_gallery_saver).
-
-2. Integrasi API Lanjutan (Nilai A+)
-
-Geoapify API: Mengganti data dummy di fitur Photographer Assistant agar memunculkan rekomendasi spot foto di sekitar pengguna yang 100% akurat.
-
-Gemini AI API: Membuat fitur AI Assistant yang bisa men-generate caption estetik dan hashtag otomatis berdasarkan foto yang sedang diedit.
-
-3. Penyelesaian Tab Navigasi
-
-Profile Tab: Membuat kalkulator sederhana untuk tarif jasa foto (Rate Card), dan mungkin mengintegrasikan FreeCurrency API untuk konversi mata uang bagi klien luar negeri.
-
-Feedback Tab: Pembuatan UI form sederhana untuk penilaian aplikasi.
+    - Tab Profile: Pembuatan UI dan struktur halaman Profile.
+    - Tab Feedback: Pembuatan UI Form feedback dan logikanya.

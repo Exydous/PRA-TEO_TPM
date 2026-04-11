@@ -20,8 +20,9 @@ lib/
 │   │
 │   ├── editor/
 │   │   ├── controllers/
-│   │   │   └── editor_controller.dart      ✅ (Matrix, Undo/Redo, Shake Gesture)
+│   │   │   └── editor_controller.dart      ✅ (Matrix, Undo/Redo, Shake Reset, Multi-Draft, Save to Gallery)
 │   │   └── screens/
+│   │       ├── home_screen.dart            ✅ (UI Galeri, Workspace List, Checkbox Seleksi)
 │   │       └── editor_screen.dart          ✅ (UI Editor, Slider Light/Color)
 │   │
 │   ├── utilities/
@@ -58,7 +59,7 @@ lib/
 ├── services/
 │   ├── location_service.dart               ✅ (Akses GPS & Izin Lokasi)
 │   ├── api_service.dart                    🚧 (Sunrise API ✅ | Geoapify ❌)
-│   ├── save_image_service.dart             ❌ (Logika simpan ke galeri HP)
+│   ├── save_image_service.dart             ✅ (Terintegrasi di EditorController via image_gallery_saver_plus)
 │   └── gemini_service.dart                 ❌ (Setup Gemini AI)
 │
 └── main.dart                               ✅ (Entry point aplikasi)
