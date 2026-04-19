@@ -45,6 +45,7 @@ dependencies:
   light: ^5.0.0
   shared_preferences: ^2.5.5
   image_gallery_saver_plus: ^4.0.1
+  google_generative_ai: ^0.4.7
 
 dev_dependencies:
   flutter_test:
