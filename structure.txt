@@ -1,64 +1,51 @@
 lib/
 ├── core/
 │   ├── constants/
-│   │   └── app_colors.dart                 ✅ (Warna tema sudah tersetting)
+│   │   ├── app_colors.dart            ✅ (Warna tema gelap/primary)
+│   │   └── api_keys.dart              ✅ [NEW] (Host URL & Anon Key Supabase)
 │   └── routes/
-│       └── app_routes.dart                 ✅ (Navigasi halaman sudah terhubung)
+│       ├── app_routes.dart            ✅ (Navigasi LOGIN -> HOME -> EDITOR)
+│       └── app_pages.dart             ✅ (Binding & Routing GetX)
 │
-├── modules/ (atau features/)
+├── features/ (Modular Architecture)
 │   ├── auth/
 │   │   ├── controllers/
-│   │   │   └── auth_controller.dart        ✅ (Logika login)
+│   │   │   └── auth_controller.dart   ✅ (Email Auth & Metadata Sync ke Supabase)
 │   │   └── screens/
-│   │       └── login_screen.dart           ✅ (UI Login)
-│   │
-│   ├── main_nav/ (Bottom Navigation)
-│   │   ├── controllers/
-│   │   │   └── nav_controller.dart         ✅ (Logika perpindahan tab)
-│   │   └── screens/
-│   │       └── main_navigation.dart        ✅ (UI Bottom Nav)
+│   │       └── login_screen.dart      ✅ (UI dinamis Login/Register)
 │   │
 │   ├── editor/
 │   │   ├── controllers/
-│   │   │   └── editor_controller.dart      ✅ (Matrix, Undo/Redo, Shake Reset, Multi-Draft, Save to Gallery, Tint)
+│   │   │   ├── editor_controller.dart ✅ (Cloud Save/Resume, Logic Matrix, Shake Sensor)
+│   │   │   └── draft_controller.dart  ✅ (Fetching data dari Tabel 'drafts' via RLS)
 │   │   └── screens/
-│   │       ├── home_screen.dart            ✅ (UI Galeri, Workspace List, Checkbox Seleksi)
-│   │       └── editor_screen.dart          ✅ (UI Editor, Slider Light/Color + Tint, UI Pilih Referensi)
-│   │
-│   ├── utilities/
-│   │   ├── color_match/
-│   │   │   ├── controllers/
-│   │   │   │   └── color_match_controller.dart ✅ (Logika skor & timer mini-game)
-│   │   │   └── screens/
-│   │   │       └── color_match_screen.dart     ✅ (UI tebak warna)
-│   │   │
-│   │   └── photo_assistant/
-│   │       ├── controllers/
-│   │       │   └── assistant_controller.dart   🚧 (LBS/Sunrise ✅ | Geoapify ❌)
-│   │       └── screens/
-│   │           └── assistant_screen.dart       🚧 (UI LBS ✅ | UI List Spot ❌)
+│   │       ├── home_screen.dart       ✅ (Grid Workspace Cloud, Checkbox Multi-Select)
+│   │       └── editor_screen.dart     ✅ (Main UI Editor + Tint Slider)
 │   │
 │   ├── profile/
 │   │   ├── controllers/
-│   │   │   └── profile_controller.dart     ❌ (Belum ada logika FreeCurrency)
+│   │   │   └── profile_controller.dart ✅ (Sign Out logic & User Data Fetch)
 │   │   └── screens/
-│   │       └── profile_screen.dart         ❌ (Belum ada UI Rate Card)
+│   │       └── profile_screen.dart    ✅ (UI Profile & Tombol Logout)
 │   │
 │   ├── feedback/
 │   │   ├── controllers/
-│   │   │   └── feedback_controller.dart    ❌ (Belum ada logika submit)
+│   │   │   └── feedback_controller.dart ❌ (Belum ada logika submit ke tabel 'feedbacks')
 │   │   └── screens/
-│   │       └── feedback_screen.dart        ❌ (Belum ada UI Form)
+│   │       └── feedback_screen.dart     ❌ (Belum ada UI Form)
 │   │
-│   └── ai_assistant/ (Reference Color Transfer)
-│       └── controllers/
-│           └── color_transfer_controller.dart ✅ (Logika pemilihan gambar & mapping slider)
-│           // (Catatan: Layar terpisah tidak dibuat karena UI menyatu di editor_screen.dart)
+│   ├── utilities/ (Mini-Games & Tools)
+│   │   ├── color_match/               ✅ (Game tebak warna HSL)
+│   │   └── photo_assistant/           🚧 (Sunrise API ✅ | Spot Finder ❌)
+│   │
+│   └── ai_assistant/ (CV Feature)
+│       └── services/
+│           └── color_transfer_service.dart ✅ (Histogram RGB & Luma Processing)
 │
 ├── services/
-│   ├── location_service.dart               ✅ (Akses GPS & Izin Lokasi)
-│   ├── api_service.dart                    🚧 (Sunrise API ✅ | Geoapify ❌)
-│   ├── save_image_service.dart             ✅ (Terintegrasi di EditorController)
-│   └── color_transfer_service.dart         ✅ (Analisis Histogram RGB & Luma On-Device)
+│   ├── supabase_service.dart          ✅ (Inisialisasi & Storage Bucket Config)
+│   ├── location_service.dart          ✅ (Geolocator GPS access)
+│   └── api_service.dart               🚧 (Sunrise-Sunset ✅ | Geoapify ❌)
 │
-└── main.dart                               ✅ (Entry point aplikasi)
+├── main.dart                          ✅ (WidgetsBinding & Supabase Init)
+└── .env (Optional/Deprecated)         ⚠️ (Sudah digantikan oleh api_keys.dart)

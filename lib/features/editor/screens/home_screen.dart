@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/editor_controller.dart'; 
@@ -9,7 +8,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final EditorController editorCtrl = Get.put(EditorController());
-    final DraftController draftCtrl = Get.put(DraftController(), permanent: true);
+    final DraftController draftCtrl = Get.put(DraftController());
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -22,7 +21,7 @@ class HomeScreen extends StatelessWidget {
           elevation: 0,
           title: Text(
             draftCtrl.isSelectionMode.value 
-                ? '${draftCtrl.selectedPaths.length} Dipilih' 
+                ? '${draftCtrl.selectedIds.length} Dipilih'
                 : 'Galeri & Workspace', 
             style: const TextStyle(color: Colors.white)
           ),
@@ -34,7 +33,7 @@ class HomeScreen extends StatelessWidget {
               : null,
           actions: draftCtrl.isSelectionMode.value
               ? [
-                  if (draftCtrl.selectedPaths.length == 1)
+                  if (draftCtrl.selectedIds.length == 1)
                     IconButton(
                       icon: const Icon(Icons.edit, color: Colors.white),
                       tooltip: 'Ganti Nama',
@@ -82,7 +81,7 @@ class HomeScreen extends StatelessWidget {
             
             const SizedBox(height: 32),
             
-            // 2. AREA WORKSPACE 
+            // 2. AREA WORKSPACE (MENGAMBIL DARI CLOUD SUPABASE)
             Obx(() {
               if (draftCtrl.savedDrafts.isEmpty) {
                 return const SizedBox.shrink(); 
@@ -101,10 +100,9 @@ class HomeScreen extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final draft = draftCtrl.savedDrafts[index];
                       
-                      // --- KUNCI PERBAIKAN: PASANG OBX KHUSUS DI SETIAP KARTU ---
                       return Obx(() {
-                        // Variabel reaktif sekarang dibaca langsung oleh masing-masing kartu
-                        final isSelected = draftCtrl.selectedPaths.contains(draft['imagePath']);
+                        // Cek apakah ID dari database cloud ini sedang dipilih
+                        final isSelected = draftCtrl.selectedIds.contains(draft['id']);
                         final isSelectionMode = draftCtrl.isSelectionMode.value;
 
                         return Container(
@@ -119,18 +117,21 @@ class HomeScreen extends StatelessWidget {
                           ),
                           child: Stack(
                             children: [
-                              // LAYER 1: KARTU UTAMA (Tombol > tetap ada di sini)
+                              // LAYER 1: KARTU UTAMA
                               InkWell(
                                 borderRadius: BorderRadius.circular(16),
                                 onLongPress: () {
                                   if (!isSelectionMode) {
-                                    draftCtrl.startSelection(draft['imagePath']);
+                                    // Panggil pakai ID
+                                    draftCtrl.startSelection(draft['id']);
                                   }
                                 },
                                 onTap: () {
                                   if (isSelectionMode) {
-                                    draftCtrl.toggleSelection(draft['imagePath']);
+                                    // Panggil pakai ID
+                                    draftCtrl.toggleSelection(draft['id']);
                                   } else {
+                                    // Buka draft untuk diedit
                                     editorCtrl.resumeDraft(draft);
                                   }
                                 },
@@ -138,12 +139,23 @@ class HomeScreen extends StatelessWidget {
                                   children: [
                                     ClipRRect(
                                       borderRadius: const BorderRadius.horizontal(left: Radius.circular(15)), 
-                                      child: Image.file(
-                                        File(draft['imagePath']),
+                                      // --- PERUBAHAN: IMAGE NETWORK DARI SUPABASE ---
+                                      child: Image.network(
+                                        draft['image_url'],
                                         width: 100, 
                                         height: 120,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) => Container(width: 100, height: 120, color: Colors.grey[900], child: const Icon(Icons.broken_image, color: Colors.white54)),
+                                        loadingBuilder: (context, child, loadingProgress) {
+                                          if (loadingProgress == null) return child;
+                                          return Container(
+                                            width: 100, height: 120, color: Colors.grey[900], 
+                                            child: const Center(child: CircularProgressIndicator(color: Colors.orangeAccent, strokeWidth: 2))
+                                          );
+                                        },
+                                        errorBuilder: (context, error, stackTrace) => Container(
+                                          width: 100, height: 120, color: Colors.grey[900], 
+                                          child: const Icon(Icons.broken_image, color: Colors.white54)
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 16),
@@ -155,19 +167,20 @@ class HomeScreen extends StatelessWidget {
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
                                             Text(
-                                              draft['fileName'] ?? 'Tanpa Nama',
+                                              // Sesuaikan dengan nama kolom Supabase
+                                              draft['draft_name'] ?? 'Tanpa Nama',
                                               style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                                               maxLines: 2, 
                                               overflow: TextOverflow.ellipsis, 
                                             ),
                                             const SizedBox(height: 6),
-                                            Text('Exposure: ${draft['exposure'].toInt()}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
-                                            Text('Saturation: ${draft['saturation'].toInt()}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                                            Text('Exposure: ${(draft['exposure'] ?? 0).toInt()}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                                            Text('Saturation: ${(draft['saturation'] ?? 0).toInt()}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
                                           ],
                                         ),
                                       ),
                                     ),
-                                    // Ikon Panah (>) SELALU AMAN di kanan tengah
+                                    // Ikon Panah (>)
                                     const Padding(
                                       padding: EdgeInsets.only(right: 16.0),
                                       child: Icon(Icons.chevron_right, color: Colors.orangeAccent),
@@ -176,7 +189,7 @@ class HomeScreen extends StatelessWidget {
                                 ),
                               ),
 
-                              // LAYER 2: KOTAK CENTANG (Hanya muncul jika mode seleksi aktif)
+                              // LAYER 2: KOTAK CENTANG
                               if (isSelectionMode)
                                 Positioned(
                                   top: 10,
@@ -187,13 +200,10 @@ class HomeScreen extends StatelessWidget {
                                         : const Icon(Icons.check_box_outline_blank, color: Colors.white54, size: 28),
                                   ),
                                 ),
-                                
                             ],
                           ),
                         );
                       }); 
-                      // --- AKHIR DARI OBX KHUSUS KARTU ---
-
                     },
                   ),
                 ],

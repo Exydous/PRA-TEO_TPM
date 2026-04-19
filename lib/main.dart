@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; 
 
 import 'core/routes/app_pages.dart';
 import 'core/routes/app_routes.dart';
 import 'core/theme/app_theme.dart';
+// Import file konstanta baru kita:
+import 'core/constants/api_keys.dart'; 
 
-void main() async {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   
-  WidgetsFlutterBinding.ensureInitialized(); // load .env sebelum runApp
-  
-  await dotenv.load(fileName: ".env"); // load .env file isi API
+  // INISIALISASI SUPABASE (Langsung menggunakan konstanta)
+  await Supabase.initialize(
+    url: ApiKeys.supabaseUrl,
+    anonKey: ApiKeys.supabaseAnonKey,
+  );
   
   runApp(const ProEditorApp());
 }
@@ -25,7 +30,7 @@ class ProEditorApp extends StatelessWidget {
       theme: AppTheme.darkTheme,
       initialRoute: AppRoutes.LOGIN,
       getPages: AppPages.pages,
-      debugShowCheckedModeBanner: false, // debug hapus banner di pojok kanan atas
+      debugShowCheckedModeBanner: false, 
     );
   }
 }
