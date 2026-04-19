@@ -19,6 +19,7 @@ class EditorState {
   final double contrast;
   final double temperature;
   final double saturation;
+  final double tint; // <--- FITUR BARU: TINT
   final bool isBlackAndWhite;
 
   EditorState({
@@ -26,6 +27,7 @@ class EditorState {
     required this.contrast,
     required this.temperature,
     required this.saturation,
+    required this.tint, // <--- FITUR BARU: TINT
     required this.isBlackAndWhite,
   });
 }
@@ -42,7 +44,8 @@ class EditorController extends GetxController {
   var exposure = 0.0.obs; 
   var contrast = 0.0.obs; 
   var temperature = 0.0.obs; 
-  var saturation = 0.0.obs; 
+  var saturation = 0.0.obs;
+  var tint = 0.0.obs; // <--- FITUR BARU: TINT
   var isBlackAndWhite = false.obs;
 
   var history = <EditorState>[].obs;
@@ -108,6 +111,7 @@ class EditorController extends GetxController {
     contrast.value = 0.0;
     temperature.value = 0.0;
     saturation.value = 0.0;
+    tint.value = 0.0; // <--- FITUR BARU: TINT
     isBlackAndWhite.value = false;
     saveState(); 
 
@@ -124,6 +128,7 @@ class EditorController extends GetxController {
       contrast: contrast.value,
       temperature: temperature.value,
       saturation: saturation.value,
+      tint: tint.value, // <--- FITUR BARU: TINT
       isBlackAndWhite: isBlackAndWhite.value,
     ));
     currentIndex.value = history.length - 1;
@@ -134,6 +139,7 @@ class EditorController extends GetxController {
     contrast.value = state.contrast;
     temperature.value = state.temperature;
     saturation.value = state.saturation;
+    tint.value = state.tint; // <--- FITUR BARU: TINT
     isBlackAndWhite.value = state.isBlackAndWhite;
   }
 
@@ -209,17 +215,17 @@ class EditorController extends GetxController {
     }
   }
 
-  // --- DIMODIFIKASI: Menerima parameter nama draft ---
   Future<void> saveToWorkspace(String draftName) async {
     if (selectedImage.value == null) return;
     
     Map<String, dynamic> newDraft = {
       'imagePath': selectedImage.value!.path,
-      'fileName': draftName, // Menggunakan nama dari Pop-Up atau Default
+      'fileName': draftName, 
       'exposure': exposure.value,
       'contrast': contrast.value,
       'temperature': temperature.value,
       'saturation': saturation.value,
+      'tint': tint.value, // <--- FITUR BARU: TINT
       'isBlackAndWhite': isBlackAndWhite.value,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     };
@@ -250,10 +256,8 @@ class EditorController extends GetxController {
     }
   }
 
-  // --- DITAMBAHKAN: Format nama file default (Tanggal & Jam) ---
   String _getDefaultDraftName() {
     final now = DateTime.now();
-    // Format: Edit_11-04-2026_16:07
     String day = now.day.toString().padLeft(2, '0');
     String month = now.month.toString().padLeft(2, '0');
     String year = now.year.toString();
@@ -263,23 +267,21 @@ class EditorController extends GetxController {
     return "Edit_${day}-${month}-${year}_$hour:$minute";
   }
 
-  // --- DITAMBAHKAN: Proses akhir menyimpan & keluar ---
   void _processSavingDraft(String customName) {
     String finalName = customName;
     if (finalName.isEmpty) {
-      finalName = _getDefaultDraftName(); // Pakai nama default jika kosong
+      finalName = _getDefaultDraftName(); 
     }
 
     saveToWorkspace(finalName).then((_) {
       resetAllSettings();
       selectedImage.value = null;
 
-      // Panggil Pos Satpam untuk refresh UI
       if (Get.isRegistered<DraftController>()) {
         Get.find<DraftController>().loadDrafts();
       }
 
-      Get.back(); // Tutup layar Editor
+      Get.back(); 
       Get.snackbar(
         '💾 Disimpan', 
         'Draft "$finalName" tersimpan di Workspace.', 
@@ -291,7 +293,6 @@ class EditorController extends GetxController {
     });
   }
 
-  // --- DIMODIFIKASI: Menampilkan Pop-Up Input Nama ---
   void cancelEditing() {
     TextEditingController nameController = TextEditingController();
 
@@ -330,17 +331,15 @@ class EditorController extends GetxController {
           ],
         ),
         actions: [
-          // Tombol Hapus/Buang jika benar-benar tidak mau simpan
           TextButton(
             onPressed: () {
-              Get.back(); // Tutup pop-up
+              Get.back(); 
               resetAllSettings();
               selectedImage.value = null;
-              Get.back(); // Tutup editor
+              Get.back(); 
             },
             child: const Text('Jangan Simpan', style: TextStyle(color: Colors.redAccent)),
           ),
-          // Tombol Simpan
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.orangeAccent,
@@ -348,14 +347,14 @@ class EditorController extends GetxController {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () {
-              Get.back(); // Tutup pop-up dulu
+              Get.back(); 
               _processSavingDraft(nameController.text.trim());
             },
             child: const Text('Simpan Draft', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
-      barrierDismissible: false, // Memaksa user untuk memilih tombol
+      barrierDismissible: false, 
     );
   }
 
@@ -367,6 +366,7 @@ class EditorController extends GetxController {
     contrast.value = 0.0; 
     temperature.value = 0.0;
     saturation.value = 0.0; 
+    tint.value = 0.0; // <--- FITUR BARU: TINT
     isBlackAndWhite.value = false;
 
     history.clear(); 
@@ -381,11 +381,14 @@ class EditorController extends GetxController {
     double baseSat = isBlackAndWhite.value ? -100.0 : saturation.value;
     double s = 1.0 + (baseSat / 100.0);
     
+    // --- PENYESUAIAN MATEMATIS UNTUK TEMP & TINT ---
     double tempAdjust = temperature.value / 250.0; 
+    double tintAdjust = tint.value / 250.0; // Plus = Magenta, Minus = Hijau
     
-    double rAdjust = tempAdjust;
-    double bAdjust = -tempAdjust;
-    double gAdjust = tempAdjust * 0.3; 
+    // Jika tint positif (magenta), kita tambah Merah & Biru, dan kurangi Hijau
+    double rAdjust = tempAdjust + tintAdjust;
+    double bAdjust = -tempAdjust + tintAdjust;
+    double gAdjust = (tempAdjust * 0.3) - tintAdjust; 
 
     const double lumR = 0.2126;
     const double lumG = 0.7152;
@@ -409,6 +412,8 @@ class EditorController extends GetxController {
     contrast.value = data['contrast'];
     temperature.value = data['temperature'];
     saturation.value = data['saturation'];
+    // Fallback ke 0.0 jika membuka draft lama yang belum punya slider Tint
+    tint.value = data['tint'] ?? 0.0; 
     isBlackAndWhite.value = data['isBlackAndWhite'];
     
     Get.toNamed(AppRoutes.EDITOR); 
@@ -418,7 +423,6 @@ class EditorController extends GetxController {
 class DraftController extends GetxController {
   var savedDrafts = <Map<String, dynamic>>[].obs;
   
-  // Variabel untuk fitur seleksi
   var isSelectionMode = false.obs;
   var selectedPaths = <String>[].obs;
 
@@ -446,25 +450,19 @@ class DraftController extends GetxController {
       savedDrafts.clear();
     }
   }
-
-  // --- LOGIKA MODE SELEKSI ---
   
-  // DIMODIFIKASI: Mempermudah startSelection
   void startSelection(String path) {
-    toggleSelection(path); // Panggil toggleSelection yang baru
+    toggleSelection(path); 
   }
 
-  // DIMODIFIKASI: Menambahkan logika auto-start/auto-stop selection mode
   void toggleSelection(String path) {
     if (selectedPaths.contains(path)) {
       selectedPaths.remove(path);
-      // Jika semua centang dilepas, matikan mode seleksi otomatis
       if (selectedPaths.isEmpty) {
         isSelectionMode.value = false;
       }
     } else {
       selectedPaths.add(path);
-      // Jika centang pertama kali dibuat, hidupkan mode seleksi otomatis
       if (!isSelectionMode.value) {
         isSelectionMode.value = true;
       }
@@ -476,7 +474,6 @@ class DraftController extends GetxController {
     selectedPaths.clear();
   }
 
-  // --- LOGIKA HAPUS DRAFT ---
   void deleteSelectedDrafts() {
     Get.dialog(
       AlertDialog(
@@ -489,17 +486,16 @@ class DraftController extends GetxController {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
             onPressed: () async {
-              Get.back(); // Tutup dialog
+              Get.back(); 
               final prefs = await SharedPreferences.getInstance();
               String? existing = prefs.getString('editor_drafts_list');
               if (existing != null) {
                 List<dynamic> drafts = jsonDecode(existing);
-                // Hapus semua draft yang dicentang
                 drafts.removeWhere((d) => selectedPaths.contains(d['imagePath']));
                 await prefs.setString('editor_drafts_list', jsonEncode(drafts));
               }
               cancelSelection();
-              loadDrafts(); // Refresh UI
+              loadDrafts(); 
               Get.snackbar('🗑️ Terhapus', 'Draft berhasil dihapus.', backgroundColor: Colors.blueGrey.shade900, colorText: Colors.white, snackPosition: SnackPosition.TOP);
             },
             child: const Text('Hapus', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -509,12 +505,10 @@ class DraftController extends GetxController {
     );
   }
 
-  // --- LOGIKA GANTI NAMA DRAFT ---
   void showRenameDialog() {
-    if (selectedPaths.length != 1) return; // Hanya bisa ganti nama 1 per 1
+    if (selectedPaths.length != 1) return; 
     String targetPath = selectedPaths.first;
     
-    // Cari nama lamanya
     String oldName = "";
     for (var d in savedDrafts) {
       if (d['imagePath'] == targetPath) oldName = d['fileName'];
@@ -541,7 +535,7 @@ class DraftController extends GetxController {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent, foregroundColor: Colors.black),
             onPressed: () async {
-              Get.back(); // Tutup dialog
+              Get.back(); 
               final prefs = await SharedPreferences.getInstance();
               String? existing = prefs.getString('editor_drafts_list');
               if (existing != null) {
@@ -555,7 +549,7 @@ class DraftController extends GetxController {
                 await prefs.setString('editor_drafts_list', jsonEncode(drafts));
               }
               cancelSelection();
-              loadDrafts(); // Refresh UI
+              loadDrafts(); 
             },
             child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.bold)),
           )

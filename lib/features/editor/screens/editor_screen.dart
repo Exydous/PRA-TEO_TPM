@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/constants/app_colors.dart';
 import '../controllers/editor_controller.dart';
+// IMPORT CONTROLLER COLOR TRANSFER (Sesuaikan path jika perlu)
+import '../../ai_assistant/controllers/color_transfer_controller.dart'; 
 
 class EditorScreen extends StatelessWidget {
   const EditorScreen({super.key});
@@ -9,6 +11,8 @@ class EditorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final EditorController controller = Get.find<EditorController>();
+    // Daftarkan Color Transfer Controller ke layar ini
+    final ColorTransferController transferCtrl = Get.put(ColorTransferController());
 
     if (controller.selectedImage.value == null) {
       Future.microtask(() => Get.back());
@@ -49,10 +53,9 @@ class EditorScreen extends StatelessWidget {
             onPressed: () => controller.resetEffects(fromSensor: false),
           ),
           
-          // --- DIMODIFIKASI: Menghubungkan tombol ✔️ ke fungsi saveToGallery ---
           IconButton(
             icon: const Icon(Icons.check, color: AppColors.primary), 
-            onPressed: controller.saveToGallery, // <--- INI YANG DIUBAH
+            onPressed: controller.saveToGallery, 
           ),
         ],
       ),
@@ -86,7 +89,57 @@ class EditorScreen extends StatelessWidget {
               ),
             ),
 
-            // 2. PANEL BAWAH
+            // --- 2. FITUR BARU: REFERENCE COLOR TRANSFER ---
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: const BoxDecoration(
+                color: Color(0xFF1A1A1A), 
+                border: Border(
+                  top: BorderSide(color: Colors.white12, width: 1),
+                  bottom: BorderSide(color: Colors.white12, width: 1),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.palette, color: AppColors.primary, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Transfer Gaya Warna', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                        Text('Tiru warna dari foto/scene film lain', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  Obx(() => transferCtrl.isProcessing.value
+                    ? const SizedBox(
+                        width: 24, height: 24,
+                        child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2)
+                      )
+                    : ElevatedButton(
+                        onPressed: transferCtrl.pickReferenceAndTransfer,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        ),
+                        child: const Text('Pilih Foto', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      )
+                  ),
+                ],
+              ),
+            ),
+
+            // 3. PANEL BAWAH (SLIDER & MENU)
             Obx(() => Container(
                   height: 260, 
                   color: const Color(0xFF1A1A1A), 
@@ -98,7 +151,7 @@ class EditorScreen extends StatelessWidget {
                             : _buildEditPanel(controller),
                       ),
                       
-                      // 3. BOTTOM NAVIGATION UTAMA
+                      // BOTTOM NAVIGATION UTAMA
                       Container(
                         height: 60,
                         color: Colors.black,
@@ -251,6 +304,8 @@ class EditorScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _buildSliderRow('Temp', controller.temperature, -100, 100, controller: controller),
+            // --- SLIDER TINT BARU DITAMBAHKAN DI SINI ---
+            _buildSliderRow('Tint', controller.tint, -100, 100, controller: controller),
             _buildSliderRow('Saturation', controller.saturation, -100, 100, controller: controller),
           ],
         );

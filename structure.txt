@@ -5,7 +5,7 @@ lib/
 │   └── routes/
 │       └── app_routes.dart                 ✅ (Navigasi halaman sudah terhubung)
 │
-├── modules/
+├── modules/ (atau features/)
 │   ├── auth/
 │   │   ├── controllers/
 │   │   │   └── auth_controller.dart        ✅ (Logika login)
@@ -20,10 +20,10 @@ lib/
 │   │
 │   ├── editor/
 │   │   ├── controllers/
-│   │   │   └── editor_controller.dart      ✅ (Matrix, Undo/Redo, Shake Reset, Multi-Draft, Save to Gallery)
+│   │   │   └── editor_controller.dart      ✅ (Matrix, Undo/Redo, Shake Reset, Multi-Draft, Save to Gallery, Tint)
 │   │   └── screens/
 │   │       ├── home_screen.dart            ✅ (UI Galeri, Workspace List, Checkbox Seleksi)
-│   │       └── editor_screen.dart          ✅ (UI Editor, Slider Light/Color)
+│   │       └── editor_screen.dart          ✅ (UI Editor, Slider Light/Color + Tint, UI Pilih Referensi)
 │   │
 │   ├── utilities/
 │   │   ├── color_match/
@@ -50,16 +50,15 @@ lib/
 │   │   └── screens/
 │   │       └── feedback_screen.dart        ❌ (Belum ada UI Form)
 │   │
-│   └── ai_assistant/ (Rencana Fitur AI)
-│       ├── controllers/
-│       │   └── gemini_controller.dart      ❌ (Belum ada API Call ke Gemini)
-│       └── screens/
-│           └── ai_caption_screen.dart      ❌ (Belum ada UI hasil caption)
+│   └── ai_assistant/ (Reference Color Transfer)
+│       └── controllers/
+│           └── color_transfer_controller.dart ✅ (Logika pemilihan gambar & mapping slider)
+│           // (Catatan: Layar terpisah tidak dibuat karena UI menyatu di editor_screen.dart)
 │
 ├── services/
 │   ├── location_service.dart               ✅ (Akses GPS & Izin Lokasi)
 │   ├── api_service.dart                    🚧 (Sunrise API ✅ | Geoapify ❌)
-│   ├── save_image_service.dart             ✅ (Terintegrasi di EditorController via image_gallery_saver_plus)
-│   └── gemini_service.dart                 ❌ (Setup Gemini AI)
+│   ├── save_image_service.dart             ✅ (Terintegrasi di EditorController)
+│   └── color_transfer_service.dart         ✅ (Analisis Histogram RGB & Luma On-Device)
 │
 └── main.dart                               ✅ (Entry point aplikasi)
