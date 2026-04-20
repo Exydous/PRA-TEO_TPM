@@ -1,0 +1,241 @@
+import 'dart:async'; // DITAMBAHKAN untuk StreamSubscription
+import 'dart:io';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:flutter/material.dart';
+import 'package:sensors_plus/sensors_plus.dart'; // DITAMBAHKAN untuk Sensor
+import '../../../core/routes/app_routes.dart';
+
+// --- DITAMBAHKAN: Class untuk menyimpan memori (History) editan ---
+class EditorState {
+  final double exposure;
+  final double contrast;
+  final double temperature;
+  final double saturation;
+  final bool isBlackAndWhite;
+
+  EditorState({
+    required this.exposure,
+    required this.contrast,
+    required this.temperature,
+    required this.saturation,
+    required this.isBlackAndWhite,
+  });
+}
+
+// Light dan Color
+enum EditorMode { crop, edit }
+enum EditSubMenu { light, color }
+
+class EditorController extends GetxController {
+  Rx<File?> selectedImage = Rx<File?>(null);
+  
+  var currentMode = EditorMode.edit.obs;
+  var currentSubMenu = EditSubMenu.light.obs;
+
+  // stats slider
+  var exposure = 0.0.obs; 
+  var contrast = 0.0.obs; 
+  var temperature = 5000.0.obs; 
+  var saturation = 0.0.obs; 
+  var isBlackAndWhite = false.obs;
+
+  // --- DITAMBAHKAN: Variabel Sistem Undo/Redo & Sensor ---
+  var history = <EditorState>[].obs;
+  var currentIndex = (-1).obs; 
+  StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
+  DateTime? _lastShakeTime;
+
+  final ImagePicker _picker = ImagePicker();
+
+  // --- DITAMBAHKAN: Siklus Hidup Controller untuk Sensor ---
+  @override
+  void onInit() {
+    super.onInit();
+    _initShakeSensor(); // Aktifkan sensor saat masuk
+  }
+
+  @override
+  void onClose() {
+    _accelerometerSubscription?.cancel(); // Matikan sensor saat keluar agar hemat baterai
+    super.onClose();
+  }
+
+  // --- DITAMBAHKAN: Logika Membaca Guncangan ---
+  void _initShakeSensor() {
+    _accelerometerSubscription = accelerometerEventStream().listen((AccelerometerEvent event) {
+      double gX = event.x;
+      final now = DateTime.now();
+
+      // Jeda 1 detik agar tidak terpanggil berulang kali
+      if (_lastShakeTime != null && now.difference(_lastShakeTime!) < const Duration(seconds: 1)) {
+        return; 
+      }
+
+      // Deteksi Kiri (Undo) vs Kanan (Redo)
+      if (gX < -5.0) { // Digentak kuat ke Kiri
+        _lastShakeTime = now;
+        undo();
+      } else if (gX > 5.0) { // Digentak kuat ke Kanan
+        _lastShakeTime = now;
+        redo();
+      }
+    });
+  }
+
+  // --- DITAMBAHKAN: Fungsi Manajemen Memori (History) ---
+  void saveState() {
+    if (currentIndex.value < history.length - 1) {
+      history.removeRange(currentIndex.value + 1, history.length);
+    }
+    history.add(EditorState(
+      exposure: exposure.value,
+      contrast: contrast.value,
+      temperature: temperature.value,
+      saturation: saturation.value,
+      isBlackAndWhite: isBlackAndWhite.value,
+    ));
+    currentIndex.value = history.length - 1;
+  }
+
+  void _applyState(EditorState state) {
+    exposure.value = state.exposure;
+    contrast.value = state.contrast;
+    temperature.value = state.temperature;
+    saturation.value = state.saturation;
+    isBlackAndWhite.value = state.isBlackAndWhite;
+  }
+
+  void undo() {
+    if (currentIndex.value > 0) {
+      currentIndex.value--;
+      _applyState(history[currentIndex.value]);
+      Get.snackbar('Undo', 'Mundur 1 langkah', duration: const Duration(seconds: 1), snackPosition: SnackPosition.TOP);
+    } else {
+      Get.snackbar('Batas', 'Sudah di titik awal editan', duration: const Duration(seconds: 1), snackPosition: SnackPosition.TOP);
+    }
+  }
+
+  void redo() {
+    if (currentIndex.value < history.length - 1) {
+      currentIndex.value++;
+      _applyState(history[currentIndex.value]);
+      Get.snackbar('Redo', 'Maju 1 langkah', duration: const Duration(seconds: 1), snackPosition: SnackPosition.TOP);
+    } else {
+      Get.snackbar('Batas', 'Sudah di editan terbaru', duration: const Duration(seconds: 1), snackPosition: SnackPosition.TOP);
+    }
+  }
+
+  // --- FUNGSI BAWAAN YANG SUDAH ADA ---
+  Future<void> openCropTool() async {
+    if (selectedImage.value == null) return;
+
+    try {
+      CroppedFile? croppedFile = await ImageCropper().cropImage(
+        sourcePath: selectedImage.value!.path,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop & Rotate',
+            toolbarColor: Colors.black,
+            toolbarWidgetColor: Colors.white,
+            backgroundColor: const Color(0xFF1A1A1A),
+            activeControlsWidgetColor: const Color(0xFF4FC3F7), 
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false,
+            hideBottomControls: false,
+            aspectRatioPresets: [
+              CropAspectRatioPreset.original,
+              CropAspectRatioPreset.square,
+              CropAspectRatioPreset.ratio3x2,
+              CropAspectRatioPreset.ratio4x3,
+              CropAspectRatioPreset.ratio5x4,
+              CropAspectRatioPreset.ratio7x5,
+              CropAspectRatioPreset.ratio16x9
+            ],
+          ),
+          IOSUiSettings(
+            title: 'Crop & Rotate',
+            aspectRatioLockEnabled: false,
+            resetButtonHidden: false,
+            aspectRatioPresets: [
+              CropAspectRatioPreset.original,
+              CropAspectRatioPreset.square,
+              CropAspectRatioPreset.ratio3x2,
+              CropAspectRatioPreset.ratio4x3,
+              CropAspectRatioPreset.ratio5x4,
+              CropAspectRatioPreset.ratio7x5,
+              CropAspectRatioPreset.ratio16x9
+            ],
+          ),
+        ],
+      );
+
+      if (croppedFile != null) {
+        selectedImage.value = File(croppedFile.path);
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal memotong gambar: $e');
+    }
+  }
+
+  Future<void> pickImageAndOpenEditor() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        selectedImage.value = File(image.path);
+        resetAllSettings();
+        Get.toNamed(AppRoutes.EDITOR);
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal membuka galeri: $e');
+    }
+  }
+
+  void cancelEditing() {
+    selectedImage.value = null;
+    Get.back();
+  }
+
+  // --- DIMODIFIKASI: Menambahkan saveState() saat reset ---
+  void resetAllSettings() {
+    currentMode.value = EditorMode.edit;
+    currentSubMenu.value = EditSubMenu.light;
+    
+    exposure.value = 0.0;
+    contrast.value = 0.0;
+    temperature.value = 5000.0;
+    saturation.value = 0.0;
+    isBlackAndWhite.value = false;
+
+    // Bersihkan memori dan rekam posisi netral ini sebagai langkah ke-0
+    history.clear();
+    saveState(); 
+  }
+
+  // --- MATRIKS WARNA INTI ---
+  List<double> get combinedColorMatrix {
+    double b = exposure.value; 
+    double c = 1.0 + (contrast.value / 100.0);
+    
+    double baseSat = isBlackAndWhite.value ? -100.0 : saturation.value;
+    double s = 1.0 + (baseSat / 100.0);
+    
+    double temp = (temperature.value - 5000) / 50.0; 
+
+    const double lumR = 0.2126;
+    const double lumG = 0.7152;
+    const double lumB = 0.0722;
+
+    double sr = (1 - s) * lumR;
+    double sg = (1 - s) * lumG;
+    double sb = (1 - s) * lumB;
+
+    return [
+      c * (sr + s) + (temp * 0.01), c * sg, c * sb - (temp * 0.01), 0, b, // Red
+      c * sr, c * (sg + s), c * sb, 0, b,                               // Green
+      c * sr - (temp * 0.01), c * sg, c * (sb + s) + (temp * 0.01), 0, b, // Blue
+      0, 0, 0, 1, 0,                                                    // Alpha
+    ];
+  }
+}
