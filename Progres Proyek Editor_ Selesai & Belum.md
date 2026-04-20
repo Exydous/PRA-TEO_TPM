@@ -9,35 +9,47 @@
 
 2. Core Editor & Intelligent Processing
 
-- (Semua fitur sensor, AI Color Transfer, dan slider tetap tersedia).
+- Sensor & Hardware: Deteksi cahaya ruangan (Lux Sensor) dan Shake to Reset berfungsi normal.
 
-- [NEW] Cloud-Sync Editor: Fungsi resumeDraft sekarang mampu mengunduh file secara asynchronous dari Cloud Storage ke memori sementara HP untuk diedit kembali.
+- Cloud-Sync Editor: Fungsi resumeDraft mampu mengunduh file secara asynchronous dari Cloud Storage ke memori sementara HP untuk diedit kembali.
 
-3. Cloud Workspace Management (Pengganti Lokal)
+- [NEW] My Presets Integration: Terhubung langsung dengan database kepemilikan. Pengguna bisa memunculkan Bottom Sheet berisi daftar preset miliknya dan mengaplikasikan efek Data-Driven (angka adjustment ditarik langsung dari Cloud) dengan sekali klik.
 
-- Migration to Supabase: Meninggalkan SharedPreferences dan beralih ke PostgreSQL (Tabel drafts).
+3. Cloud Workspace Management
 
-- Supabase Storage Integration: Foto draf tidak lagi disimpan di folder HP, melainkan di-upload ke Bucket Storage Supabase (Global Access).
+- Migration to Supabase: Meninggalkan penyimpanan lokal dan beralih ke PostgreSQL (Tabel drafts).
 
-- Cloud Selection Mode: Fitur hapus dan ganti nama draf kini langsung melakukan update ke database pusat secara real-time.
+- Supabase Storage Integration: Foto draf di-upload ke Bucket Storage Supabase (Global Access).
+
+- Cloud Selection Mode: Fitur hapus dan ganti nama draf langsung melakukan update ke database pusat secara real-time.
 
 - Auto-Cleanup Logout: Sistem pembersihan cache dan controller saat logout untuk memastikan privasi data.
 
-4. Tab Profile (Layar Identitas)
+4. Tab Profile (Layar Identitas & Kepemilikan)
 
-- User Identity: Menampilkan Nama (dari metadata) dan Email pengguna yang sedang aktif secara dinamis.
+- User Identity: Menampilkan Nama dan Email pengguna yang sedang aktif secara dinamis.
 
-- Secure Logout: Tombol logout dengan dialog konfirmasi dan proteksi pembersihan data memori (Get.delete).
+- Secure Logout: Tombol logout dengan perlindungan pembersihan data memori.
+
+- [NEW] Koleksi Preset (Ownership): Halaman profil kini menampilkan Grid View berisi daftar preset premium yang telah berhasil dibeli oleh user.
+
+5. [NEW] Dynamic Preset Store & Monetization
+
+- Katalog Cloud (Data-Driven): Daftar preset, gambar thumbnail, harga dasar, dan pengaturan efek (exposure, contrast, dll) ditarik langsung dari Supabase.
+
+- Real-time Currency (FreeCurrency API): Harga preset otomatis dikonversi secara real-time sesuai mata uang yang dipilih pengguna (IDR, USD, EUR).
+
+- Sistem Transaksi & Relasi (RLS): Pembelian dicatat di tabel relasi user_presets. UI sangat reaktif—tombol "Beli" akan otomatis berubah menjadi "Owned" (Milikmu) sesaat setelah transaksi berhasil.
 
 🚧 Fitur yang Belum Dibuat (Misi Selanjutnya)
-1. Integrasi API Lanjutan (Eksplorasi Data)
+1. AI & Advanced Tooling
 
-- Geoapify API: Mengganti Data Dummy di fitur Photographer Assistant agar memunculkan spot foto yang akurat sesuai lokasi GPS user.
+- AI Color Transfer (Logika Inti): UI sudah tersedia, namun logika pengambilan referensi warna dari foto/film lain untuk diterapkan ke foto user belum dieksekusi.
 
-- FreeCurrency API: Kalkulator tarif jasa fotografer di menu Profile (konversi mata uang untuk Rate Card).
+2. Integrasi API Lanjutan (Eksplorasi Data)
 
-2. Pengembangan Konten Tab Sampingan
+- Geoapify API (Photographer Assistant): Mengganti Data Dummy agar memunculkan rekomendasi spot foto yang akurat sesuai lokasi GPS user.
 
-- Tab Feedback: Pembuatan UI Form feedback. Rencananya bisa dikirim ke tabel feedbacks di Supabase agar kamu bisa membacanya dari dashboard.
+3. Pengembangan Konten Ekstra
 
-- Profile Page Enhancement: Menambahkan statistik (misal: "Jumlah Draft Tersimpan") untuk mempercantik halaman profil.
+- Tab Feedback: Pembuatan UI Form feedback yang akan menembak data langsung ke tabel feedbacks di Supabase.

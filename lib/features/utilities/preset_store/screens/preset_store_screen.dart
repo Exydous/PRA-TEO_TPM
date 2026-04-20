@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:tugas_akhir/features/editor/controllers/editor_controller.dart';
 import '../controllers/preset_store_controller.dart';
 
 class PresetStoreScreen extends StatelessWidget {
@@ -9,6 +10,7 @@ class PresetStoreScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Inisialisasi Controller
     final controller = Get.put(PresetStoreController());
+    // final editorController = Get.put(EditorController()); // Memastikan EditorController aktif
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -31,11 +33,12 @@ class PresetStoreScreen extends StatelessWidget {
                   value: controller.selectedCurrency.value,
                   dropdownColor: Colors.grey[900],
                   icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-                  underline: const SizedBox(), // Hilangkan garis bawah default
+                  underline: const SizedBox(), 
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   onChanged: (String? newValue) {
                     if (newValue != null) {
-                      controller.changeCurrency(newValue);
+                      // Panggil updateCurrency yang langsung menembak API kurs
+                      controller.updateCurrency(newValue);
                     }
                   },
                   items: controller.availableCurrencies
@@ -67,21 +70,37 @@ class PresetStoreScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             
-            // Grid Produk
+            // Grid Produk dari Supabase
             Expanded(
-              child: Obx(() => GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.7, // Mengatur tinggi card (lebih tinggi dari lebarnya)
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                ),
-                itemCount: controller.dummyPresets.length,
-                itemBuilder: (context, index) {
-                  final preset = controller.dummyPresets[index];
-                  return _buildPresetCard(controller, preset);
-                },
-              )),
+              child: Obx(() {
+                // 1. Tampilkan loading jika data Supabase masih ditarik
+                if (controller.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator(color: Colors.white));
+                }
+
+                // 2. Tampilkan pesan jika tabel di database kosong
+                if (controller.presets.isEmpty) {
+                  return const Center(
+                    child: Text("Belum ada preset tersedia saat ini.", style: TextStyle(color: Colors.white54))
+                  );
+                }
+
+                // 3. Tampilkan Grid jika data berhasil didapat
+                return GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.65, // Disesuaikan karena butuh ruang untuk gambar web
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount: controller.presets.length,
+                  itemBuilder: (context, index) {
+                    // Tipe datanya sekarang Map, bukan PresetItem lagi
+                    final preset = controller.presets[index];
+                    return _buildPresetCard(controller, preset);
+                  },
+                );
+              }),
             ),
           ],
         ),
@@ -89,7 +108,8 @@ class PresetStoreScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPresetCard(PresetStoreController controller, PresetItem preset) {
+  // Parameter diubah untuk menerima tipe data Map (JSON dari Supabase)
+  Widget _buildPresetCard(PresetStoreController controller, Map<String, dynamic> preset) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A),
@@ -99,30 +119,30 @@ class PresetStoreScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Mockup Thumbnail Image (Kotak Atas)
+          // Gambar Asli dari Link Web
           Expanded(
-            flex: 3,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(int.parse(preset.colorTheme)),
-                    Colors.black,
-                  ],
+            flex: 4,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: Image.network(
+                preset['thumbnail_url'] ?? '', 
+                fit: BoxFit.cover,
+                width: double.infinity,
+                errorBuilder: (context, error, stackTrace) => Container( 
+                  color: Colors.black45,
+                  child: const Icon(Icons.broken_image, color: Colors.white54, size: 40), 
                 ),
-              ),
-              child: const Center(
-                child: Icon(Icons.auto_awesome, color: Colors.white54, size: 40),
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(child: CircularProgressIndicator(color: Colors.white24, strokeWidth: 2));
+                },
               ),
             ),
           ),
           
           // Info Teks (Kotak Bawah)
           Expanded(
-            flex: 4,
+            flex: 5,
             child: Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
@@ -133,45 +153,81 @@ class PresetStoreScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        preset.name,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                        preset['name'] ?? 'Unknown Preset',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'by ${preset.photographer}',
+                        'by ${preset['author'] ?? 'Admin'}',
                         style: const TextStyle(color: Colors.orangeAccent, fontSize: 11),
                       ),
                     ],
                   ),
                   
-                  // Harga dan Tombol Beli
+                  // Harga dan Tombol Beli / Owned
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // --- DIMODIFIKASI: Dibungkus Obx agar reaktif ---
-                      Obx(() => Text( 
-                        controller.getConvertedPrice(preset.basePriceUSD),
-                        style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600),
-                      )),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 32,
-                        child: ElevatedButton(
-                          onPressed: () => controller.buyPreset(preset),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white, // Sesuaikan dengan AppColors.primary jika ada
-                            foregroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: EdgeInsets.zero,
-                          ),
-                          child: const Text('Beli', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                        ),
+                      // Loading kecil saat API FreeCurrency sedang menghitung kurs
+                      Obx(() => controller.isCurrencyLoading.value 
+                        ? const SizedBox(
+                            height: 16, width: 16, 
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white54)
+                          )
+                        : Text( 
+                            controller.getConvertedPrice((preset['price_usd'] as num?)?.toDouble() ?? 0.0),
+                            style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+                          )
                       ),
+                      const SizedBox(height: 8),
+                      
+                      // --- LOGIKA TOMBOL BERUBAH (BELI vs OWNED) ---
+                      Obx(() {
+                        // Mengecek apakah ID preset ini sudah ada di daftar ownedPresets
+                        final EditorController editorController = Get.find<EditorController>();
+                        bool isOwned = editorController.ownedPresets.any((p) => p['id'] == preset['id']);
+
+                        if (isOwned) {
+                          // Tampilan jika SUDAH DIBELI
+                          return SizedBox(
+                            width: double.infinity,
+                            height: 32,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Get.snackbar('Tersedia', 'Preset ini sudah ada di Editor-mu!', backgroundColor: Colors.blueGrey.shade900, colorText: Colors.white);
+                              },
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white54,
+                                side: const BorderSide(color: Colors.white24),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                padding: EdgeInsets.zero,
+                              ),
+                              icon: const Icon(Icons.check_circle, size: 14),
+                              label: const Text('Owned', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                            ),
+                          );
+                        } else {
+                          // Tampilan jika BELUM DIBELI
+                          return SizedBox(
+                            width: double.infinity,
+                            height: 32,
+                            child: ElevatedButton(
+                              onPressed: () => controller.buyPreset(preset),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white, 
+                                foregroundColor: Colors.black,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: EdgeInsets.zero,
+                              ),
+                              child: const Text('Beli', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                            ),
+                          );
+                        }
+                      }),
                     ],
                   )
                 ],

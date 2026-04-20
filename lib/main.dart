@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; 
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // Pastikan ini ada
+import 'package:flutter_dotenv/flutter_dotenv.dart'; 
 import 'core/routes/app_pages.dart';
 import 'core/routes/app_routes.dart';
 import 'core/theme/app_theme.dart';

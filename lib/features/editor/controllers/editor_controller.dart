@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:shake_gesture/shake_gesture.dart'; 
 import 'package:light/light.dart'; 
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart'; 
-// --- IMPORT BARU UNTUK CLOUD ---
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -34,11 +33,11 @@ enum EditorMode { crop, edit }
 enum EditSubMenu { light, color }
 
 class EditorController extends GetxController {
-  final supabase = Supabase.instance.client; // KONEKSI SUPABASE
+  final supabase = Supabase.instance.client; 
   
   Rx<File?> selectedImage = Rx<File?>(null);
-  var currentDraftId = ''.obs; // Melacak ID draft jika sedang mengedit draft lama
-  var oldImageUrl = ''.obs; // Melacak foto lama di Storage
+  var currentDraftId = ''.obs; 
+  var oldImageUrl = ''.obs; 
   
   var currentMode = EditorMode.edit.obs;
   var currentSubMenu = EditSubMenu.light.obs;
@@ -61,11 +60,16 @@ class EditorController extends GetxController {
   final ImagePicker _picker = ImagePicker();
   final GlobalKey exportKey = GlobalKey();
 
+  // --- FITUR BARU: KOLEKSI PRESET MILIK USER ---
+  var ownedPresets = <Map<String, dynamic>>[].obs;
+  var isPresetsLoading = false.obs;
+
   @override
   void onInit() {
     super.onInit();
     ShakeGesture.registerCallback(onShake: _onShakeDetected);
     _initLightSensor(); 
+    loadOwnedPresets(); // Load preset saat editor disiapkan
   }
 
   @override
@@ -73,6 +77,56 @@ class EditorController extends GetxController {
     ShakeGesture.unregisterCallback(onShake: _onShakeDetected);
     _lightSubscription?.cancel(); 
     super.onClose();
+  }
+
+  // --- MENGAMBIL PRESET DARI SUPABASE ---
+  Future<void> loadOwnedPresets() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      isPresetsLoading.value = true;
+      // Join tabel user_presets dengan tabel presets
+      final response = await supabase
+          .from('user_presets')
+          .select('presets (*)') 
+          .eq('user_id', user.id)
+          .order('purchased_at', ascending: false);
+
+      ownedPresets.value = List<Map<String, dynamic>>.from(
+        response.map((e) => e['presets'])
+      );
+    } catch (e) {
+      debugPrint("Gagal memuat koleksi preset: $e");
+    } finally {
+      isPresetsLoading.value = false;
+    }
+  }
+
+  // --- MENERAPKAN PRESET KE FOTO ---
+  void applyPreset(Map<String, dynamic> preset) {
+    String name = preset['name'] ?? 'Preset';
+    
+    // Tarik angka langsung dari database (Map json), gunakan as num? agar aman
+    exposure.value = (preset['exposure'] as num?)?.toDouble() ?? 0.0;
+    contrast.value = (preset['contrast'] as num?)?.toDouble() ?? 0.0;
+    temperature.value = (preset['temperature'] as num?)?.toDouble() ?? 0.0;
+    saturation.value = (preset['saturation'] as num?)?.toDouble() ?? 0.0;
+    tint.value = (preset['tint'] as num?)?.toDouble() ?? 0.0;
+    
+    // Untuk boolean B&W
+    isBlackAndWhite.value = preset['is_black_and_white'] ?? false;
+    
+    saveState(); // Simpan ke history agar bisa di-undo
+    
+    Get.snackbar(
+      '✨ Preset Aktif', 
+      'Menerapkan gaya $name', 
+      snackPosition: SnackPosition.TOP, 
+      backgroundColor: Colors.black87, 
+      colorText: Colors.white, 
+      duration: const Duration(seconds: 2)
+    );
   }
 
   void _initLightSensor() {
@@ -142,7 +196,7 @@ class EditorController extends GetxController {
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       if (image != null) {
         selectedImage.value = File(image.path);
-        currentDraftId.value = ''; // Reset ID draft karena ini foto baru
+        currentDraftId.value = ''; 
         oldImageUrl.value = '';
         resetAllSettings(); 
         Get.toNamed(AppRoutes.EDITOR); 
@@ -166,7 +220,6 @@ class EditorController extends GetxController {
       if (result['isSuccess']) {
         Get.snackbar('📸 Berhasil!', 'Foto berhasil disimpan ke Galeri.', backgroundColor: Colors.green, colorText: Colors.white);
         
-        // Hapus dari database cloud jika ini berasal dari draft
         if (currentDraftId.value.isNotEmpty) {
           await supabase.from('drafts').delete().eq('id', currentDraftId.value);
           if (Get.isRegistered<DraftController>()) Get.find<DraftController>().loadDrafts();
@@ -178,13 +231,11 @@ class EditorController extends GetxController {
     }
   }
 
-  // --- LOGIKA BARU: SIMPAN KE SUPABASE ---
   Future<void> saveToCloud(String draftName) async {
     if (selectedImage.value == null) return;
     final user = supabase.auth.currentUser;
     if (user == null) throw Exception("User belum login");
 
-    // 1. Upload Gambar ke Storage
     String fileName = '${user.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
     await supabase.storage.from('draft_images').upload(fileName, selectedImage.value!);
     String newImageUrl = supabase.storage.from('draft_images').getPublicUrl(fileName);
@@ -201,10 +252,8 @@ class EditorController extends GetxController {
       'is_black_and_white': isBlackAndWhite.value,
     };
 
-    // 2. Jika ini draft lama yang diedit ulang (Update), jika baru (Insert)
     if (currentDraftId.value.isNotEmpty) {
       await supabase.from('drafts').update(draftData).eq('id', currentDraftId.value);
-      // Opsional: Hapus foto lama di storage agar tidak menumpuk
       if (oldImageUrl.value.isNotEmpty) {
         String oldFileName = oldImageUrl.value.split('/').last;
         await supabase.storage.from('draft_images').remove([oldFileName]);
@@ -226,13 +275,13 @@ class EditorController extends GetxController {
 
       if (Get.isRegistered<DraftController>()) Get.find<DraftController>().loadDrafts();
       
-      Get.back(); // Tutup loading
-      Get.back(); // Tutup dialog input
+      Get.back(); 
+      Get.back(); 
       Get.back();
       
       Get.snackbar('💾 Disimpan', 'Draft "$finalName" tersimpan aman di Cloud.', backgroundColor: Colors.blueGrey.shade900, colorText: Colors.white, snackPosition: SnackPosition.TOP);
     } catch (e) {
-      Get.back(); // Tutup loading
+      Get.back(); 
       Get.snackbar('❌ Gagal', 'Gagal menyimpan draft: $e', backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
@@ -247,7 +296,7 @@ class EditorController extends GetxController {
         content: TextField(
           controller: nameController,
           style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(hintText: 'Nama Draft', hintStyle: const TextStyle(color: Colors.white38), filled: true, fillColor: Colors.black),
+          decoration: const InputDecoration(hintText: 'Nama Draft', hintStyle: TextStyle(color: Colors.white38), filled: true, fillColor: Colors.black),
         ),
         actions: [
           TextButton(onPressed: () { Get.back(); resetAllSettings(); selectedImage.value = null; Get.back(); }, child: const Text('Buang', style: TextStyle(color: Colors.redAccent))),
@@ -279,23 +328,17 @@ class EditorController extends GetxController {
     ];
   }
 
-  // --- LOGIKA BARU: MENGUNDUH FOTO DARI CLOUD SAAT DIBUKA ---
   Future<void> resumeDraft(Map<String, dynamic> data) async {
     Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
     try {
-      // Ekstrak nama file dari URL
       String fileName = data['image_url'].split('/').last;
-      
-      // Unduh bytes foto dari Supabase
       final Uint8List fileBytes = await supabase.storage.from('draft_images').download(fileName);
-      
-      // Simpan sementara di memori HP agar Editor bisa membacanya sebagai File
       final tempDir = await getTemporaryDirectory();
       File tempFile = File('${tempDir.path}/temp_draft_${data['id']}.jpg');
       await tempFile.writeAsBytes(fileBytes);
 
       selectedImage.value = tempFile;
-      currentDraftId.value = data['id']; // Simpan ID agar bisa diupdate nanti
+      currentDraftId.value = data['id']; 
       oldImageUrl.value = data['image_url'];
 
       exposure.value = data['exposure'].toDouble();
@@ -305,24 +348,24 @@ class EditorController extends GetxController {
       tint.value = (data['tint'] ?? 0.0).toDouble(); 
       isBlackAndWhite.value = data['is_black_and_white'];
       
-      Get.back(); // Tutup loading
+      Get.back(); 
       Get.toNamed(AppRoutes.EDITOR); 
     } catch (e) {
-      Get.back(); // Tutup loading
+      Get.back(); 
       Get.snackbar('Error', 'Gagal mengunduh draft dari cloud: $e', backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 }
 
 // ==========================================
-// DRAFT CONTROLLER (Hanya mengurus data dari Supabase)
+// DRAFT CONTROLLER
 // ==========================================
 class DraftController extends GetxController {
   final supabase = Supabase.instance.client;
   var savedDrafts = <Map<String, dynamic>>[].obs;
   
   var isSelectionMode = false.obs;
-  var selectedIds = <String>[].obs; // Berubah dari path menjadi ID
+  var selectedIds = <String>[].obs; 
 
   @override
   void onInit() {
@@ -330,7 +373,6 @@ class DraftController extends GetxController {
     loadDrafts();
   }
 
-  // Mengambil draft khusus milik user yang sedang login (Otomatis difilter RLS)
   Future<void> loadDrafts() async {
     try {
       final response = await supabase
@@ -377,15 +419,12 @@ class DraftController extends GetxController {
               Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
               
               try {
-                // Hapus dari Database berdasarkan ID
                 for (String id in selectedIds) {
                   await supabase.from('drafts').delete().eq('id', id);
-                  // Catatan: Jika ingin lebih hemat, kamu bisa menambahkan logika untuk 
-                  // menghapus filenya juga dari Storage bucket `draft_images`.
                 }
                 cancelSelection();
                 await loadDrafts(); 
-                Get.back(); // Tutup loading
+                Get.back(); 
                 Get.snackbar('🗑️ Terhapus', 'Draft berhasil dihapus dari Cloud.', backgroundColor: Colors.blueGrey.shade900, colorText: Colors.white);
               } catch (e) {
                 Get.back();
@@ -414,7 +453,7 @@ class DraftController extends GetxController {
         content: TextField(
           controller: nameCtrl,
           style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(filled: true, fillColor: Colors.black),
+          decoration: const InputDecoration(filled: true, fillColor: Colors.black),
         ),
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text('Batal', style: TextStyle(color: Colors.white54))),

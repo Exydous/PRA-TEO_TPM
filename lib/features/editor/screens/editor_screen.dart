@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/constants/app_colors.dart';
 import '../controllers/editor_controller.dart';
-// IMPORT CONTROLLER COLOR TRANSFER (Sesuaikan path jika perlu)
 import '../../ai_assistant/controllers/color_transfer_controller.dart'; 
 
 class EditorScreen extends StatelessWidget {
@@ -11,7 +10,6 @@ class EditorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final EditorController controller = Get.find<EditorController>();
-    // Daftarkan Color Transfer Controller ke layar ini
     final ColorTransferController transferCtrl = Get.put(ColorTransferController());
 
     if (controller.selectedImage.value == null) {
@@ -25,7 +23,7 @@ class EditorScreen extends StatelessWidget {
         backgroundColor: Colors.black,
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.white),
-          onPressed: controller.cancelEditing, // Akan memicu saveToWorkspace (Draft)
+          onPressed: controller.cancelEditing, 
         ),
         
         title: Row(
@@ -89,7 +87,7 @@ class EditorScreen extends StatelessWidget {
               ),
             ),
 
-            // --- 2. FITUR BARU: REFERENCE COLOR TRANSFER ---
+            // --- 2. FITUR REFERENCE COLOR TRANSFER ---
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: const BoxDecoration(
@@ -170,6 +168,12 @@ class EditorScreen extends StatelessWidget {
                               isActive: controller.currentMode.value == EditorMode.edit,
                               onTap: () => controller.currentMode.value = EditorMode.edit,
                             ),
+                            _mainToolButton(
+                              icon: Icons.auto_awesome,
+                              label: 'My Presets',
+                              isActive: false, 
+                              onTap: () => _showPresetsBottomSheet(context, controller),
+                            ),
                           ],
                         ),
                       ),
@@ -183,7 +187,6 @@ class EditorScreen extends StatelessWidget {
     );
   }
 
-  // --- HELPER WIDGETS ---
   Widget _mainToolButton({required IconData icon, required String label, required bool isActive, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
@@ -304,7 +307,6 @@ class EditorScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _buildSliderRow('Temp', controller.temperature, -100, 100, controller: controller),
-            // --- SLIDER TINT BARU DITAMBAHKAN DI SINI ---
             _buildSliderRow('Tint', controller.tint, -100, 100, controller: controller),
             _buildSliderRow('Saturation', controller.saturation, -100, 100, controller: controller),
           ],
@@ -347,6 +349,108 @@ class EditorScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  // --- FUNGSI BOTTOM SHEET MY PRESETS ---
+  void _showPresetsBottomSheet(BuildContext context, EditorController controller) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF13151D),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          // 1. TINGGI DIKURANGI AGAR TIDAK TERLALU PANJANG KE BAWAH
+          height: 200, 
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'My Presets',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: Obx(() {
+                  if (controller.isPresetsLoading.value) {
+                    return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+                  }
+
+                  if (controller.ownedPresets.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.sentiment_dissatisfied, color: Colors.white38, size: 30),
+                          const SizedBox(height: 8),
+                          const Text(
+                            "Koleksi kosong. Dapatkan di Store!",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.white54, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: controller.ownedPresets.length,
+                    itemBuilder: (context, index) {
+                      final preset = controller.ownedPresets[index];
+                      return GestureDetector(
+                        onTap: () {
+                          controller.applyPreset(preset);
+                          Get.back();
+                        },
+                        child: Container(
+                          // 2. LEBAR DITAMBAH AGAR MEMBENTUK KOTAK (SQUARE)
+                          width: 120, 
+                          margin: const EdgeInsets.only(right: 16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1A1C24),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white12),
+                          ),
+                          child: Column(
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                                  child: Image.network(
+                                    preset['thumbnail_url'] ?? '',
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        const Icon(Icons.broken_image, color: Colors.white54),
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                                child: Text(
+                                  preset['name'] ?? 'Preset',
+                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                  maxLines: 1, // Dibuat 1 baris agar tidak memakan ruang gambar
+                                  textAlign: TextAlign.center,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
