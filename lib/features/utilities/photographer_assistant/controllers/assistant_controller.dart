@@ -1,35 +1,79 @@
-import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
+import 'package:tugas_akhir/services/assistant_service.dart';
 
 class AssistantController extends GetxController {
   var isLoading = false.obs;
   var statusMessage = 'Klik untuk optimasi sesi fotomu'.obs;
+  var nearbySpots = <Map<String, dynamic>>[].obs;
+  var userLat = 0.0.obs;
+  var userLon = 0.0.obs;
 
-  // Data Golden Hour
-  var sunrise = '--:--'.obs;
-  var sunset = '--:--'.obs;
+  var selectedTimeZone = 'WIB'.obs;
+  var rawSunrise = ''.obs; 
+  var rawSunset = ''.obs;  
 
-  // Data Spot Foto (API Google Places)
-  var nearbySpots = <dynamic>[].obs;
-  
-  // PENTING: Ganti dengan API Key Google Maps kamu agar Spot Finder aktif
-  final String googleApiKey = "YOUR_GOOGLE_MAPS_API_KEY";
+  // Kita gunakan .obs murni (bukan getter) agar UI dijamin 100% ter-refresh!
+  var displaySunrise = '--:--'.obs;
+  var displaySunset = '--:--'.obs;
+
+  // Fungsi khusus untuk menghitung ulang waktu saat zona waktu diganti
+  void updateDisplayedTime() {
+    displaySunrise.value = _formatTime(rawSunrise.value);
+    displaySunset.value = _formatTime(rawSunset.value);
+  }
+
+  String _formatTime(String utcTime) {
+    if (utcTime.isEmpty) return '--:--';
+    
+    try {
+      print("INFO API: Waktu asli dari server -> $utcTime"); // Cek isi aslinya
+      
+      // Deteksi jika API mengembalikan format AM/PM biasa tanpa huruf 'T'
+      if (!utcTime.contains('T')) {
+        return utcTime; // Langsung tampilkan saja apa adanya
+      }
+
+      DateTime dt = DateTime.parse(utcTime).toUtc();
+      
+      int offset = 7; 
+      if (selectedTimeZone.value == 'WITA') offset = 8;
+      if (selectedTimeZone.value == 'WIT') offset = 9;
+      if (selectedTimeZone.value == 'LONDON') offset = 1; 
+
+      dt = dt.add(Duration(hours: offset));
+      return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+    } catch (e) {
+      print("❌ ERROR PARSING WAKTU: $e");
+      return '--:--';
+    }
+  }
 
   Future<void> findBestSetup() async {
     isLoading.value = true;
     statusMessage.value = 'Melacak lokasi & mencari spot terbaik...';
 
     try {
-      // 1. Cek Izin & Ambil Lokasi (LBS)
       Position pos = await _determinePosition();
+      userLat.value = pos.latitude;
+      userLon.value = pos.longitude;
       
-      // 2. Jalankan dua API secara paralel
-      await Future.wait([
-        _fetchSunData(pos.latitude, pos.longitude),
-        _fetchNearbyPlaces(pos.latitude, pos.longitude),
+      final service = AssistantService();
+
+      final results = await Future.wait([
+        service.getSunData(pos.latitude, pos.longitude),
+        service.getNearbyPhotographySpots(pos.latitude, pos.longitude),
       ]);
+
+      final sunData = results[0] as Map<String, String>;
+      final spotsData = results[1] as List<Map<String, dynamic>>;
+
+      rawSunrise.value = sunData['sunrise'] ?? '';
+      rawSunset.value = sunData['sunset'] ?? '';
+      nearbySpots.value = spotsData;
+      
+      // Panggil fungsi ini agar UI layar langsung diupdate!
+      updateDisplayedTime();
 
       statusMessage.value = 'Rencana memotret siap di lokasimu!';
     } catch (e) {
@@ -49,30 +93,5 @@ class AssistantController extends GetxController {
       if (permission == LocationPermission.denied) return Future.error('Izin GPS ditolak');
     }
     return await Geolocator.getCurrentPosition();
-  }
-
-  Future<void> _fetchSunData(double lat, double lng) async {
-    final res = await http.get(Uri.parse('https://api.sunrise-sunset.org/json?lat=$lat&lng=$lng&formatted=0'));
-    if (res.statusCode == 200) {
-      var data = json.decode(res.body)['results'];
-      sunrise.value = _formatToLocal(data['sunrise']);
-      sunset.value = _formatToLocal(data['sunset']);
-    }
-  }
-
-  Future<void> _fetchNearbyPlaces(double lat, double lng) async {
-    // Mencari taman (park) dan tempat wisata (tourist_attraction) radius 3km
-    final url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$lat,$lng&radius=3000&type=park&key=$googleApiKey';
-    
-    final res = await http.get(Uri.parse(url));
-    if (res.statusCode == 200) {
-      var data = json.decode(res.body);
-      nearbySpots.value = data['results']; 
-    }
-  }
-
-  String _formatToLocal(String utcTime) {
-    DateTime dt = DateTime.parse(utcTime).toLocal();
-    return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
   }
 }

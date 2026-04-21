@@ -54,5 +54,6 @@ lib
 │           └── utilities_screen.dart
 ├── main.dart
 └── services
+    ├── assistant_service.dart
     ├── color_transfer_service.dart
     └── currency_service.dart

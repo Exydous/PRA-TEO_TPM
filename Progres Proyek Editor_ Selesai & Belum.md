@@ -3,6 +3,8 @@
 
 - Sistem Auth (Supabase): Login & Register sudah terintegrasi penuh dengan database Cloud.
 
+- [NEW] Advanced Security: Menerapkan enkripsi ganda. Password divalidasi dengan RegEx (Kombinasi Kapital, Angka, Karakter Spesial) lalu di-hash menggunakan algoritma SHA-256 dari sisi aplikasi sebelum dikirim dan dienkripsi ulang dengan bcrypt oleh Supabase.
+
 - Security Logic: Berhasil menerapkan Row Level Security (RLS) sehingga data antar pengguna tidak akan pernah tertukar.
 
 - Dynamic UI Auth: Layar login yang bisa berubah mode (Login/Register) secara reaktif menggunakan GetX.
@@ -13,7 +15,9 @@
 
 - Cloud-Sync Editor: Fungsi resumeDraft mampu mengunduh file secara asynchronous dari Cloud Storage ke memori sementara HP untuk diedit kembali.
 
-- [NEW] My Presets Integration: Terhubung langsung dengan database kepemilikan. Pengguna bisa memunculkan Bottom Sheet berisi daftar preset miliknya dan mengaplikasikan efek Data-Driven (angka adjustment ditarik langsung dari Cloud) dengan sekali klik.
+- My Presets Integration: Terhubung langsung dengan database kepemilikan. Pengguna bisa memunculkan Bottom Sheet berisi daftar preset miliknya dan mengaplikasikan efek Data-Driven (angka adjustment ditarik langsung dari Cloud) dengan sekali klik.
+
+- [NEW] AI Color Transfer: Logika inti pengolahan Histogram RGB dan Luma untuk mengambil referensi warna dari foto/film lain sudah dieksekusi dan terhubung dengan EditorScreen.
 
 3. Cloud Workspace Management
 
@@ -31,25 +35,29 @@
 
 - Secure Logout: Tombol logout dengan perlindungan pembersihan data memori.
 
-- [NEW] Koleksi Preset (Ownership): Halaman profil kini menampilkan Grid View berisi daftar preset premium yang telah berhasil dibeli oleh user.
+- Koleksi Preset (Ownership): Halaman profil kini menampilkan Grid View berisi daftar preset premium yang telah berhasil dibeli oleh user.
 
-5. [NEW] Dynamic Preset Store & Monetization
+5. Dynamic Preset Store & Monetization
 
 - Katalog Cloud (Data-Driven): Daftar preset, gambar thumbnail, harga dasar, dan pengaturan efek (exposure, contrast, dll) ditarik langsung dari Supabase.
 
-- Real-time Currency (FreeCurrency API): Harga preset otomatis dikonversi secara real-time sesuai mata uang yang dipilih pengguna (IDR, USD, EUR).
+- Real-time Currency: Harga preset otomatis dikonversi secara real-time menggunakan FreeCurrency API sesuai mata uang yang dipilih pengguna (IDR, USD, EUR).
 
 - Sistem Transaksi & Relasi (RLS): Pembelian dicatat di tabel relasi user_presets. UI sangat reaktif—tombol "Beli" akan otomatis berubah menjadi "Owned" (Milikmu) sesaat setelah transaksi berhasil.
 
-🚧 Fitur yang Belum Dibuat (Misi Selanjutnya)
-1. AI & Advanced Tooling
+6. [NEW] Photographer Assistant (Location & Time Optimizer)
 
-- AI Color Transfer (Logika Inti): UI sudah tersedia, namun logika pengambilan referensi warna dari foto/film lain untuk diterapkan ke foto user belum dieksekusi.
+- Dynamic Sun Data & Timezone: Terintegrasi dengan API Sunrise-Sunset yang dilengkapi kalkulator zona waktu dinamis (WIB, WITA, WIT, LONDON) secara real-time.
 
-2. Integrasi API Lanjutan (Eksplorasi Data)
+- Geoapify Smart Radar: Memindai spot foto, taman, dan tempat bersejarah di sekitar user secara presisi tanpa error data kosong/zombie.
 
-- Geoapify API (Photographer Assistant): Mengganti Data Dummy agar memunculkan rekomendasi spot foto yang akurat sesuai lokasi GPS user.
+- Interactive Maps: Menampilkan peta OpenStreetMap (OSM) bertema Dark Mode interaktif menggunakan flutter_map dengan pin lokasi dan navigasi otomatis ke Google Maps.
 
-3. Pengembangan Konten Ekstra
+🚧 Fitur yang Belum Dibuat (Misi Final)
+1. Rate Card Calculator (Tab Profile)
 
-- Tab Feedback: Pembuatan UI Form feedback yang akan menembak data langsung ke tabel feedbacks di Supabase.
+- Membuat UI Kalkulator tarif jasa fotografer yang menggunakan layanan Currency API (yang sudah ada) agar fotografer bisa menghitung dan menunjukkan tarif jasanya dalam berbagai mata uang (IDR, USD, EUR).
+
+2. Tab Feedback (Ekstra)
+
+- Pembuatan UI Form feedback yang akan menembak data masukan/saran dari user langsung ke tabel feedbacks di Supabase.

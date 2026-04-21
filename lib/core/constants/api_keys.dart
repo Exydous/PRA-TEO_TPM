@@ -5,4 +5,5 @@ class ApiKeys {
   static String supabaseUrl = dotenv.get('SUPABASE_URL', fallback: '');
   static String supabaseAnonKey = dotenv.get('SUPABASE_ANON_KEY', fallback: '');
   static String get currencyApiKey => dotenv.env['FREECURRENCY_API_KEY'] ?? '';
+  static String get geoapifyKey => dotenv.env['GEOAPIFY_API_KEY'] ?? '';
 }
