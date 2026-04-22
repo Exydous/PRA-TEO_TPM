@@ -2,12 +2,15 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hive_flutter/hive_flutter.dart'; // [BARU] Import Hive
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum GameState { menu, leaderboard, memorize, guess, result, finalScore }
 
 class ColorMatchController extends GetxController {
   final supabase = Supabase.instance.client;
+  // [BARU] Panggil Kotak Rahasia Hive
+  final Box authBox = Hive.box('authBox');
   
   var currentState = GameState.menu.obs;
   
@@ -39,16 +42,19 @@ class ColorMatchController extends GetxController {
   void onInit() {
     super.onInit();
     _loadDefaultUsername();
-    fetchLeaderboard(); // Ambil data top player saat aplikasi dibuka
+    fetchLeaderboard(); 
   }
 
   // --- LOGIKA CLOUD (SUPABASE) ---
 
-  // Ambil nama dari profil akun
+  // [DIUBAH] Ambil nama dari Hive, bukan Supabase Auth
   void _loadDefaultUsername() {
-    final user = supabase.auth.currentUser;
-    if (user != null) {
-      gameUsername.value = user.userMetadata?['display_name'] ?? 'Player';
+    String currentEmail = authBox.get('currentUser', defaultValue: '');
+    if (currentEmail.isNotEmpty) {
+      var userData = authBox.get(currentEmail);
+      gameUsername.value = (userData != null && userData['name'] != null) 
+          ? userData['name'] 
+          : 'Player';
     } else {
       gameUsername.value = 'Guest';
     }
@@ -72,16 +78,16 @@ class ColorMatchController extends GetxController {
     }
   }
 
-  // Kirim Skor Akhir ke Supabase
+  // [DIUBAH] Kirim Skor Akhir ke Supabase Menggunakan Email Hive
   Future<void> submitFinalScoreToCloud() async {
-    final user = supabase.auth.currentUser;
-    if (user == null) return;
+    String currentEmail = authBox.get('currentUser', defaultValue: '');
+    if (currentEmail.isEmpty) return; // Batal jika bermain sebagai anonim murni
 
     double finalAvg = totalScore.value / 4;
 
     try {
       await supabase.from('color_match_scores').insert({
-        'user_id': user.id,
+        'user_id': currentEmail, // Kirim email lokal sebagai ID
         'username': gameUsername.value,
         'accuracy_score': finalAvg,
       });
@@ -159,7 +165,7 @@ class ColorMatchController extends GetxController {
     _timer?.cancel();
     currentState.value = GameState.menu;
     _loadDefaultUsername();
-    fetchLeaderboard(); // Pastikan data terbaru muncul saat kembali
+    fetchLeaderboard(); 
   }
 
   @override

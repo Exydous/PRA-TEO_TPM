@@ -353,101 +353,104 @@ class EditorScreen extends StatelessWidget {
   }
 
   // --- FUNGSI BOTTOM SHEET MY PRESETS ---
+  // --- FUNGSI BOTTOM SHEET MY PRESETS ---
   void _showPresetsBottomSheet(BuildContext context, EditorController controller) {
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF13151D),
+      isScrollControlled: true, // [BARU] Izinkan tinggi custom bekerja maksimal
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          // 1. TINGGI DIKURANGI AGAR TIDAK TERLALU PANJANG KE BAWAH
-          height: 200, 
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'My Presets',
-                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: Obx(() {
-                  if (controller.isPresetsLoading.value) {
-                    return const Center(child: CircularProgressIndicator(color: AppColors.primary));
-                  }
+        // [BARU] Bungkus dengan SafeArea agar tidak menabrak tombol navigasi HP
+        return SafeArea( 
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 10), // Padding bawah disesuaikan
+            height: 240, // [DIUBAH] Ditinggikan sedikit agar gambar & teks proporsional
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'My Presets',
+                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: Obx(() {
+                    if (controller.isPresetsLoading.value) {
+                      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+                    }
 
-                  if (controller.ownedPresets.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.sentiment_dissatisfied, color: Colors.white38, size: 30),
-                          const SizedBox(height: 8),
-                          const Text(
-                            "Koleksi kosong. Dapatkan di Store!",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.white54, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: controller.ownedPresets.length,
-                    itemBuilder: (context, index) {
-                      final preset = controller.ownedPresets[index];
-                      return GestureDetector(
-                        onTap: () {
-                          controller.applyPreset(preset);
-                          Get.back();
-                        },
-                        child: Container(
-                          // 2. LEBAR DITAMBAH AGAR MEMBENTUK KOTAK (SQUARE)
-                          width: 120, 
-                          margin: const EdgeInsets.only(right: 16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1A1C24),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.white12),
-                          ),
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                                  child: Image.network(
-                                    preset['thumbnail_url'] ?? '',
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    errorBuilder: (context, error, stackTrace) =>
-                                        const Icon(Icons.broken_image, color: Colors.white54),
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-                                child: Text(
-                                  preset['name'] ?? 'Preset',
-                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                                  maxLines: 1, // Dibuat 1 baris agar tidak memakan ruang gambar
-                                  textAlign: TextAlign.center,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
+                    if (controller.ownedPresets.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.sentiment_dissatisfied, color: Colors.white38, size: 30),
+                            const SizedBox(height: 8),
+                            const Text(
+                              "Koleksi kosong. Dapatkan di Store!",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.white54, fontSize: 12),
+                            ),
+                          ],
                         ),
                       );
-                    },
-                  );
-                }),
-              ),
-            ],
+                    }
+
+                    return ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: controller.ownedPresets.length,
+                      itemBuilder: (context, index) {
+                        final preset = controller.ownedPresets[index];
+                        return GestureDetector(
+                          onTap: () {
+                            controller.applyPreset(preset);
+                            Get.back(); // Tutup panel setelah preset dipilih
+                          },
+                          child: Container(
+                            width: 110, // [DIUBAH] Lebar sedikit dirampingkan
+                            margin: const EdgeInsets.only(right: 16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1A1C24),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.white12),
+                            ),
+                            child: Column(
+                              children: [
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                                    child: Image.network(
+                                      preset['thumbnail_url'] ?? '',
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      errorBuilder: (context, error, stackTrace) =>
+                                          const Icon(Icons.broken_image, color: Colors.white54),
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 8.0),
+                                  child: Text(
+                                    preset['name'] ?? 'Preset',
+                                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                    maxLines: 1,
+                                    textAlign: TextAlign.center,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  }),
+                ),
+              ],
+            ),
           ),
         );
       },

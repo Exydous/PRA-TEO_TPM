@@ -1,26 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hive_flutter/hive_flutter.dart'; // [BARU] Import Hive
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tugas_akhir/features/editor/controllers/editor_controller.dart';
-import '../../../../services/currency_service.dart'; // Pastikan path ini sesuai
+import '../../../../services/currency_service.dart'; 
 
 class PresetStoreController extends GetxController {
-  // Inisialisasi layanan Cloud & API
   final supabase = Supabase.instance.client;
   final CurrencyService _currencyService = CurrencyService();
+  // [BARU] Panggil Kotak Rahasia Hive
+  final Box authBox = Hive.box('authBox');
   
-  // Data dinamis dari Cloud Supabase
   var presets = <Map<String, dynamic>>[].obs;
   
-  // Status Loading
   var isLoading = true.obs;
   var isCurrencyLoading = false.obs;
 
-  // Mata uang yang dipilih
   var selectedCurrency = 'IDR'.obs;
   final List<String> availableCurrencies = ['IDR', 'USD', 'EUR'];
   
-  // Rate dinamis dari API
   var exchangeRate = 15500.0.obs; 
 
   @override
@@ -30,7 +28,6 @@ class PresetStoreController extends GetxController {
     updateCurrency('IDR'); 
   }
 
-  // --- 1. AMBIL DATA DARI SUPABASE ---
   Future<void> fetchPresets() async {
     try {
       isLoading.value = true;
@@ -53,7 +50,6 @@ class PresetStoreController extends GetxController {
     }
   }
 
-  // --- 2. AMBIL KURS DARI FREECURRENCY API ---
   Future<void> updateCurrency(String currencyCode) async {
     isCurrencyLoading.value = true;
     selectedCurrency.value = currencyCode;
@@ -67,7 +63,6 @@ class PresetStoreController extends GetxController {
     isCurrencyLoading.value = false;
   }
 
-  // --- 3. FORMAT HARGA DINAMIS ---
   String getConvertedPrice(double basePriceUsd) {
     double convertedPrice = basePriceUsd * exchangeRate.value;
     
@@ -79,19 +74,24 @@ class PresetStoreController extends GetxController {
     return "\$${convertedPrice.toStringAsFixed(2)}";
   }
 
-  // --- 4. PEMBELIAN & SIMPAN KE DATABASE ---
+  // --- [DIUBAH] PEMBELIAN MENGGUNAKAN HIVE LOKAL ---
   Future<void> buyPreset(Map<String, dynamic> preset) async {
-    final user = supabase.auth.currentUser;
+    String currentEmail = authBox.get('currentUser', defaultValue: '');
     
-    if (user == null) {
-      Get.snackbar('Gagal', 'Kamu harus login terlebih dahulu.');
+    if (currentEmail.isEmpty) {
+      Get.snackbar(
+        'Gagal', 
+        'Kamu harus login terlebih dahulu.',
+        backgroundColor: Colors.red.shade900,
+        colorText: Colors.white
+      );
       return;
     }
 
     try {
-      // 1. Catat pembelian ke tabel user_presets
+      // 1. Catat pembelian ke tabel user_presets menggunakan Email
       await supabase.from('user_presets').insert({
-        'user_id': user.id,
+        'user_id': currentEmail, 
         'preset_id': preset['id'],
       });
 
@@ -100,7 +100,7 @@ class PresetStoreController extends GetxController {
         '🛒 Berhasil!',
         'Preset "${preset['name']}" telah ditambahkan ke koleksimu.',
         snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.green.shade800,
         colorText: Colors.white,
         duration: const Duration(seconds: 3),
       );
@@ -111,13 +111,13 @@ class PresetStoreController extends GetxController {
       }
 
     } catch (e) {
-      // Jika terjadi error (Biasanya karena constraint UNIQUE: User sudah punya preset ini)
       Get.snackbar(
-        'Info',
-        'Kamu sudah memiliki preset "${preset['name']}" di koleksimu.',
+        'Database Error',
+        'Gagal menyimpan: $e',
         snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.orange,
+        backgroundColor: Colors.red.shade900,
         colorText: Colors.white,
+        duration: const Duration(seconds: 4),
       );
     }
   }

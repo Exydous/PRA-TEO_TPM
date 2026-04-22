@@ -6,7 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../controllers/main_controller.dart';
 import '../../editor/screens/home_screen.dart';
 import '../../utilities/screens/utilities_screen.dart';
-import '../../profiles/screens/feedback_screen.dart';
+import '../../feedback/screens/feedback_screen.dart';
 import '../../profiles/screens/profile_screen.dart';
 
 class MainScreen extends StatelessWidget {

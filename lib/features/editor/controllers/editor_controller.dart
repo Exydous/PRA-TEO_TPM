@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'dart:typed_data'; 
 import 'package:flutter/rendering.dart'; 
 import 'package:get/get.dart';
+import 'package:hive_flutter/hive_flutter.dart'; // [BARU] Import Hive
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:flutter/material.dart';
@@ -34,6 +35,8 @@ enum EditSubMenu { light, color }
 
 class EditorController extends GetxController {
   final supabase = Supabase.instance.client; 
+  // [BARU] Panggil Kotak Rahasia Hive
+  final Box authBox = Hive.box('authBox');
   
   Rx<File?> selectedImage = Rx<File?>(null);
   var currentDraftId = ''.obs; 
@@ -60,7 +63,6 @@ class EditorController extends GetxController {
   final ImagePicker _picker = ImagePicker();
   final GlobalKey exportKey = GlobalKey();
 
-  // --- FITUR BARU: KOLEKSI PRESET MILIK USER ---
   var ownedPresets = <Map<String, dynamic>>[].obs;
   var isPresetsLoading = false.obs;
 
@@ -69,7 +71,7 @@ class EditorController extends GetxController {
     super.onInit();
     ShakeGesture.registerCallback(onShake: _onShakeDetected);
     _initLightSensor(); 
-    loadOwnedPresets(); // Load preset saat editor disiapkan
+    loadOwnedPresets(); 
   }
 
   @override
@@ -79,18 +81,19 @@ class EditorController extends GetxController {
     super.onClose();
   }
 
-  // --- MENGAMBIL PRESET DARI SUPABASE ---
+  // --- MENGAMBIL PRESET DARI SUPABASE MENGGUNAKAN HIVE ---
   Future<void> loadOwnedPresets() async {
-    final user = supabase.auth.currentUser;
-    if (user == null) return;
+    // Ambil email dari Hive
+    String currentEmail = Hive.box('authBox').get('currentUser', defaultValue: '');
+    if (currentEmail.isEmpty) return;
 
     try {
       isPresetsLoading.value = true;
-      // Join tabel user_presets dengan tabel presets
+      // Filter menggunakan Email, bukan user.id lama
       final response = await supabase
           .from('user_presets')
           .select('presets (*)') 
-          .eq('user_id', user.id)
+          .eq('user_id', currentEmail)
           .order('purchased_at', ascending: false);
 
       ownedPresets.value = List<Map<String, dynamic>>.from(
@@ -103,21 +106,16 @@ class EditorController extends GetxController {
     }
   }
 
-  // --- MENERAPKAN PRESET KE FOTO ---
   void applyPreset(Map<String, dynamic> preset) {
     String name = preset['name'] ?? 'Preset';
-    
-    // Tarik angka langsung dari database (Map json), gunakan as num? agar aman
     exposure.value = (preset['exposure'] as num?)?.toDouble() ?? 0.0;
     contrast.value = (preset['contrast'] as num?)?.toDouble() ?? 0.0;
     temperature.value = (preset['temperature'] as num?)?.toDouble() ?? 0.0;
     saturation.value = (preset['saturation'] as num?)?.toDouble() ?? 0.0;
     tint.value = (preset['tint'] as num?)?.toDouble() ?? 0.0;
-    
-    // Untuk boolean B&W
     isBlackAndWhite.value = preset['is_black_and_white'] ?? false;
     
-    saveState(); // Simpan ke history agar bisa di-undo
+    saveState(); 
     
     Get.snackbar(
       '✨ Preset Aktif', 
@@ -231,17 +229,23 @@ class EditorController extends GetxController {
     }
   }
 
+  // --- [DIUBAH] MENYIMPAN DRAFT MENGGUNAKAN EMAIL LOKAL ---
   Future<void> saveToCloud(String draftName) async {
     if (selectedImage.value == null) return;
-    final user = supabase.auth.currentUser;
-    if (user == null) throw Exception("User belum login");
+    
+    // Ambil email dari Hive
+    String currentEmail = authBox.get('currentUser', defaultValue: '');
+    if (currentEmail.isEmpty) throw Exception("User belum login");
 
-    String fileName = '${user.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    // Nama file sekarang menggunakan email agar unik
+    String safeEmail = currentEmail.replaceAll('@', '_').replaceAll('.', '_');
+    String fileName = '${safeEmail}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    
     await supabase.storage.from('draft_images').upload(fileName, selectedImage.value!);
     String newImageUrl = supabase.storage.from('draft_images').getPublicUrl(fileName);
 
     Map<String, dynamic> draftData = {
-      'user_id': user.id,
+      'user_id': currentEmail, // Simpan email ke kolom user_id
       'draft_name': draftName,
       'image_url': newImageUrl,
       'exposure': exposure.value,
@@ -362,6 +366,9 @@ class EditorController extends GetxController {
 // ==========================================
 class DraftController extends GetxController {
   final supabase = Supabase.instance.client;
+  // [BARU] Panggil Hive juga di sini
+  final Box authBox = Hive.box('authBox');
+  
   var savedDrafts = <Map<String, dynamic>>[].obs;
   
   var isSelectionMode = false.obs;
@@ -373,11 +380,16 @@ class DraftController extends GetxController {
     loadDrafts();
   }
 
+  // --- [DIUBAH] MEMUAT DRAFT SESUAI EMAIL LOKAL ---
   Future<void> loadDrafts() async {
+    String currentEmail = authBox.get('currentUser', defaultValue: '');
+    if (currentEmail.isEmpty) return;
+
     try {
       final response = await supabase
           .from('drafts')
           .select()
+          .eq('user_id', currentEmail) // [PENTING] Filter agar tidak mengambil data orang lain
           .order('created_at', ascending: false);
       
       savedDrafts.value = List<Map<String, dynamic>>.from(response);

@@ -53,11 +53,28 @@
 
 - Interactive Maps: Menampilkan peta OpenStreetMap (OSM) bertema Dark Mode interaktif menggunakan flutter_map dengan pin lokasi dan navigasi otomatis ke Google Maps.
 
-🚧 Fitur yang Belum Dibuat (Misi Final)
-1. Rate Card Calculator (Tab Profile)
-
-- Membuat UI Kalkulator tarif jasa fotografer yang menggunakan layanan Currency API (yang sudah ada) agar fotografer bisa menghitung dan menunjukkan tarif jasanya dalam berbagai mata uang (IDR, USD, EUR).
-
-2. Tab Feedback (Ekstra)
+7. Tab Feedback (Ekstra)
 
 - Pembuatan UI Form feedback yang akan menembak data masukan/saran dari user langsung ke tabel feedbacks di Supabase.
+
+8. Pemilihan (Multi Select)
+
+- Fitur di tab drafts untuk menghapus secara langsung
+
+🚧 Fitur yang Belum Dibuat (Misi Final)
+
+1. Pencarian
+
+- Bisa dibuat untuk preset store, drafts, atau forum feedback
+
+2. Notifikasi
+
+- Daily reminder atau balasan forum feedback
+
+3. Login Biometric
+
+- Menggunakan sidik jari
+
+4. Profile Picture
+
+- User dapat mengunggah profile picture

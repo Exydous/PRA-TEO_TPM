@@ -2,11 +2,12 @@ import 'dart:convert'; // Untuk utf8.encode
 import 'package:crypto/crypto.dart'; // Untuk SHA-256
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:hive_flutter/hive_flutter.dart'; // [BARU] Import Hive
 import '../../../core/routes/app_routes.dart';
 
 class AuthController extends GetxController {
-  final SupabaseClient supabase = Supabase.instance.client;
+  // [BARU] Panggil Kotak Rahasia Hive untuk sistem Auth Lokal
+  final Box authBox = Hive.box('authBox'); 
   
   var isLoading = false.obs;
   var isLoginMode = true.obs; // Toggle antara Login & Register
@@ -19,14 +20,18 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    
+    // [BARU] Panggil fungsi intip saat layar Auth pertama kali dibuka
+    intipIsiHive(); 
+    
     _checkExistingSession();
   }
 
-  // Cek jika user tidak sengaja menutup aplikasi, tidak perlu login ulang
+  // [DIUBAH] Cek sesi sekarang menggunakan Hive
   void _checkExistingSession() {
-    final session = supabase.auth.currentSession;
-    if (session != null) {
-      Future.delayed(Duration.zero, () => Get.offAllNamed('/main'));
+    if (authBox.containsKey('currentUser')) {
+      // Pastikan menggunakan AppRoutes.MAIN (atau sesuaikan dengan file app_routes.dart)
+      Future.delayed(Duration.zero, () => Get.offAllNamed(AppRoutes.MAIN));
     }
   }
 
@@ -39,7 +44,7 @@ class AuthController extends GetxController {
     rePasswordController.clear();
   }
 
-  // --- 1. MESIN VALIDASI PASSWORD ---
+  // --- 1. MESIN VALIDASI PASSWORD (TETAP SAMA) ---
   String? validatePassword(String password) {
     if (password.length < 8) {
       return "Password minimal 8 karakter";
@@ -56,7 +61,7 @@ class AuthController extends GetxController {
     return null; // Return null berarti password lolos semua ujian
   }
 
-  // --- 2. MESIN ENKRIPSI SHA-256 ---
+  // --- 2. MESIN ENKRIPSI SHA-256 (TETAP SAMA) ---
   String hashPassword(String password) {
     var bytes = utf8.encode(password); // Ubah teks asli menjadi byte
     var digest = sha256.convert(bytes); // Proses enkripsi SHA-256
@@ -98,53 +103,73 @@ class AuthController extends GetxController {
     }
   }
 
-  // --- LOGIKA REGISTRASI ---
+  // --- [DIUBAH] LOGIKA REGISTRASI LOKAL HIVE ---
   Future<void> registerUser(String name, String email, String rawPassword) async {
     isLoading.value = true;
     try {
-      // ENKRIPSI PASSWORD SEBELUM DIKIRIM
+      // 1. Cek apakah email sudah terdaftar di HP
+      if (authBox.containsKey(email)) {
+        Get.snackbar('❌ Gagal', 'Email ini sudah terdaftar di perangkat ini.', backgroundColor: Colors.red.shade900, colorText: Colors.white);
+        return;
+      }
+
+      // 2. ENKRIPSI PASSWORD SEBELUM DISIMPAN
       String securedPassword = hashPassword(rawPassword);
 
-      final AuthResponse res = await supabase.auth.signUp(
-        email: email,
-        password: securedPassword, // Kirim password yang sudah di-hash
-        data: {'display_name': name},
-      );
+      // 3. Simpan data (termasuk nama) ke Hive dengan format Map JSON
+      await authBox.put(email, {
+        'name': name,
+        'password': securedPassword,
+      });
 
-      if (res.user != null) {
-        Get.snackbar(
-          '✅ Berhasil', 
-          'Akun $name telah dibuat. Silakan login.', 
-          backgroundColor: Colors.green.shade800, 
-          colorText: Colors.white
-        );
-        // Otomatis pindah ke mode login setelah sukses daftar
-        isLoginMode.value = true;
-      }
-    } on AuthException catch (e) {
-      Get.snackbar('❌ Gagal', e.message, backgroundColor: Colors.red.shade900, colorText: Colors.white);
+      // [BARU] Panggil fungsi intip untuk melihat data yang baru saja masuk
+      intipIsiHive();
+
+      Get.snackbar(
+        '✅ Berhasil', 
+        'Akun $name telah dibuat. Silakan login.', 
+        backgroundColor: Colors.green.shade800, 
+        colorText: Colors.white
+      );
+      
+      // Otomatis pindah ke mode login setelah sukses daftar
+      isLoginMode.value = true;
+      
+    } catch (e) {
+      Get.snackbar('❌ Gagal', 'Terjadi kesalahan: $e', backgroundColor: Colors.red.shade900, colorText: Colors.white);
     } finally {
       isLoading.value = false;
     }
   }
 
-  // --- LOGIKA LOGIN ---
+  // --- [DIUBAH] LOGIKA LOGIN LOKAL HIVE ---
   Future<void> loginUser(String email, String rawPassword) async {
     isLoading.value = true;
     try {
-      // ENKRIPSI INPUT USER UNTUK DICOCOKKAN DENGAN DATABASE
+      // 1. Ambil data akun dari memori berdasarkan email
+      var userData = authBox.get(email);
+
+      // Cek jika akun tidak ditemukan
+      if (userData == null) {
+        Get.snackbar('❌ Login Gagal', 'Email atau Password salah.', backgroundColor: Colors.red.shade900, colorText: Colors.white);
+        return;
+      }
+
+      // 2. ENKRIPSI INPUT USER UNTUK DICOCOKKAN DENGAN DATABASE LOKAL
       String securedPassword = hashPassword(rawPassword);
 
-      final AuthResponse res = await supabase.auth.signInWithPassword(
-        email: email,
-        password: securedPassword, // Kirim password yang sudah di-hash
-      );
+      // 3. Cocokkan Hash Password
+      if (userData['password'] == securedPassword) {
+        // Jika berhasil, simpan ID email ke 'currentUser' sebagai penanda sesi aktif
+        await authBox.put('currentUser', email);
 
-      if (res.user != null) {
+        // [BARU] Intip isi Hive untuk melihat sesi currentUser
+        intipIsiHive();
+
         emailController.clear();
         passwordController.clear();
         
-        Get.offAllNamed('/main');
+        Get.offAllNamed(AppRoutes.MAIN);
         Get.snackbar(
           '👋 Selamat Datang', 
           'Login berhasil!', 
@@ -152,10 +177,9 @@ class AuthController extends GetxController {
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
         );
+      } else {
+        Get.snackbar('❌ Login Gagal', 'Email atau Password salah.', backgroundColor: Colors.red.shade900, colorText: Colors.white);
       }
-    } on AuthException {
-      // Pesan error diubah menjadi lebih aman
-      Get.snackbar('❌ Login Gagal', 'Email atau Password salah.', backgroundColor: Colors.red.shade900, colorText: Colors.white);
     } catch (e) {
       Get.snackbar('❌ Error', 'Terjadi kesalahan sistem.', backgroundColor: Colors.red.shade900, colorText: Colors.white);
     } finally {
@@ -163,10 +187,38 @@ class AuthController extends GetxController {
     }
   }
 
-  // --- LOGIKA LOGOUT ---
+  // --- [DIUBAH] LOGIKA LOGOUT LOKAL HIVE ---
   Future<void> logoutUser() async {
-    await supabase.auth.signOut();
+    // Cukup hapus kunci sesi aktifnya, datanya sendiri tetap aman di Hive
+    await authBox.delete('currentUser');
     Get.offAllNamed(AppRoutes.LOGIN);
+  }
+
+  // --- [BARU] Fungsi Tambahan Untuk Mengambil Nama di Tab Profile Nanti ---
+  String getActiveUserName() {
+    String currentEmail = authBox.get('currentUser', defaultValue: '');
+    if (currentEmail.isNotEmpty) {
+      var userData = authBox.get(currentEmail);
+      if (userData != null) {
+        return userData['name'] ?? 'User';
+      }
+    }
+    return 'User';
+  }
+
+  // --- [BARU] FUNGSI DEBUG UNTUK MELIHAT ISI HIVE ---
+  void intipIsiHive() {
+    print('========== ISI KOTAK HIVE ==========');
+    if (authBox.isEmpty) {
+      print('Kotak kosong! Belum ada user terdaftar.');
+    } else {
+      for (var key in authBox.keys) {
+        print('🔑 Key : $key');
+        print('📦 Data: ${authBox.get(key)}');
+        print('------------------------------------');
+      }
+    }
+    print('====================================');
   }
 
   @override

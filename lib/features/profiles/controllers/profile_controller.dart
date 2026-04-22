@@ -1,10 +1,11 @@
 import 'package:get/get.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:hive_flutter/hive_flutter.dart'; // [BARU] Import Hive
 import '../../../core/routes/app_routes.dart';
 import '../../editor/controllers/editor_controller.dart';
 
 class ProfileController extends GetxController {
-  final SupabaseClient supabase = Supabase.instance.client;
+  // [BARU] Panggil Kotak Rahasia Hive
+  final Box authBox = Hive.box('authBox'); 
   
   var userName = ''.obs;
   var userEmail = ''.obs;
@@ -15,22 +16,37 @@ class ProfileController extends GetxController {
     _loadUserData();
   }
 
-  // Mengambil nama dan email dari sesi Supabase yang sedang aktif
+  // --- [DIUBAH] Mengambil nama dan email dari Hive ---
   void _loadUserData() {
-    final user = supabase.auth.currentUser;
-    if (user != null) {
-      userEmail.value = user.email ?? 'Tidak ada email';
-      // Mengambil nama dari metadata yang kita simpan saat register tadi
-      userName.value = user.userMetadata?['display_name'] ?? 'Pengguna';
+    // 1. Cek siapa email yang sedang aktif saat ini
+    String currentEmail = authBox.get('currentUser', defaultValue: '');
+    
+    if (currentEmail.isNotEmpty) {
+      userEmail.value = currentEmail;
+      
+      // 2. Ambil data lengkap (termasuk nama) berdasarkan email tersebut
+      var userData = authBox.get(currentEmail);
+      if (userData != null) {
+        userName.value = userData['name'] ?? 'Pengguna';
+      } else {
+        userName.value = 'Pengguna';
+      }
+    } else {
+      userEmail.value = 'Tidak ada email';
+      userName.value = 'Guest';
     }
   }
 
-  // Fungsi Logout
+  // --- [DIUBAH] Fungsi Logout Lokal ---
   Future<void> logout() async {
-    await supabase.auth.signOut();
+    // Hapus sesi aktif dari Hive (Logout Lokal)
+    await authBox.delete('currentUser');
     
     // Hapus controller dari memori agar data lama hilang total
-    Get.delete<DraftController>(force: true);
+    // (Abaikan jika DraftController muncul garis merah, bisa dihapus baris ini jika tidak dipakai)
+    try {
+      Get.delete<DraftController>(force: true); 
+    } catch(e) {}
     Get.delete<EditorController>(force: true);
 
     Get.offAllNamed(AppRoutes.LOGIN);

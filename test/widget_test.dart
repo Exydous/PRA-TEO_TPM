@@ -8,7 +8,7 @@ void main() {
   testWidgets('Aplikasi Pro-Editor berjalan dan merender layar Login', (WidgetTester tester) async {
     // 1. Build aplikasi kita dan panggil frame pertama.
     // Ganti MyApp() menjadi ProEditorApp()
-    await tester.pumpWidget(const ProEditorApp());
+    await tester.pumpWidget(const ProEditorApp(isLoggedIn: false));
 
     // 2. Karena kita menggunakan GetX untuk navigasi awal, 
     // kita butuh pumpAndSettle agar animasi transisi/loading halaman selesai.
