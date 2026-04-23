@@ -64,7 +64,7 @@ class AssistantScreen extends StatelessWidget {
           children: [
             // Layer Peta Dasar (Dark Mode OpenStreetMap)
             TileLayer(
-              urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+              urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
               subdomains: const ['a', 'b', 'c', 'd'],
             ),
             
