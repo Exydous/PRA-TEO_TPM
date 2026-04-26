@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../controllers/assistant_controller.dart';
 
 class AssistantScreen extends StatelessWidget {
@@ -25,6 +24,9 @@ class AssistantScreen extends StatelessWidget {
         children: [
           _buildSunHeader(controller),
           
+          // Pemilih Radius (5, 10, 15 KM)
+          _buildRadiusSelector(controller),
+          
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Align(
@@ -33,7 +35,6 @@ class AssistantScreen extends StatelessWidget {
             ),
           ),
 
-          // --- AREA PETA INTERAKTIF ---
           Expanded(
             child: controller.userLat.value == 0.0 
               ? _buildEmptyState(controller)
@@ -46,7 +47,38 @@ class AssistantScreen extends StatelessWidget {
     );
   }
 
-  // --- WIDGET PETA DARI FLUTTER_MAP ---
+  Widget _buildRadiusSelector(AssistantController controller) {
+    return Container(
+      height: 60,
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: controller.radiusOptions.map((radius) {
+          return Obx(() => Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text("${radius.toInt()} KM"),
+              selected: controller.selectedRadius.value == radius,
+              selectedColor: Colors.blueAccent,
+              backgroundColor: const Color(0xFF1A1C24),
+              labelStyle: TextStyle(
+                color: controller.selectedRadius.value == radius ? Colors.white : Colors.white54, 
+                fontWeight: FontWeight.bold
+              ),
+              onSelected: (selected) {
+                if (selected) {
+                  controller.selectedRadius.value = radius;
+                  if (controller.userLat.value != 0.0) controller.findBestSetup(); 
+                }
+              },
+            ),
+          ));
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildInteractiveMap(AssistantController controller) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -59,33 +91,39 @@ class AssistantScreen extends StatelessWidget {
         child: FlutterMap(
           options: MapOptions(
             initialCenter: LatLng(controller.userLat.value, controller.userLon.value),
-            initialZoom: 13.0, // Zoom level kota
+            initialZoom: 13.0, 
           ),
           children: [
-            // Layer Peta Dasar (Dark Mode OpenStreetMap)
             TileLayer(
               urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
               subdomains: const ['a', 'b', 'c', 'd'],
             ),
             
-            // Layer Pin/Marker
+            // [BARU] LAYER UNTUK MENGGAMBAR GARIS RUTE
+            Obx(() => PolylineLayer(
+              polylines: [
+                if (controller.routePoints.isNotEmpty)
+                  Polyline(
+                    points: controller.routePoints.toList(), // Solusi penambahan .toList()
+                    color: Colors.blueAccent,
+                    strokeWidth: 5.0,
+                  ),
+              ],
+            )),
+
             MarkerLayer(
               markers: [
-                // 1. Pin Lokasi User (Warna Biru)
                 Marker(
                   point: LatLng(controller.userLat.value, controller.userLon.value),
                   width: 40, height: 40,
                   child: const Icon(Icons.my_location, color: Colors.blueAccent, size: 28),
                 ),
-                
-                // 2. Pin Spot Foto (Warna Merah)
                 ...controller.nearbySpots.map((spot) {
                   return Marker(
                     point: LatLng(spot['lat'], spot['lon']),
                     width: 50, height: 50,
                     child: GestureDetector(
-                      // Munculkan pop-up saat pin ditekan
-                      onTap: () => _showSpotDetail(spot),
+                      onTap: () => _showSpotDetail(spot, controller), // Kirim controller ke fungsi
                       child: const Icon(Icons.location_on, color: Colors.redAccent, size: 36),
                     ),
                   );
@@ -98,13 +136,7 @@ class AssistantScreen extends StatelessWidget {
     );
   }
 
-  // --- BOTTOM SHEET SAAT PIN PETA DIKLIK ---
-  void _showSpotDetail(Map<String, dynamic> spot) {
-    double distanceInMeters = (spot['distance'] as num?)?.toDouble() ?? 0.0;
-    String distanceLabel = distanceInMeters > 1000 
-        ? "${(distanceInMeters / 1000).toStringAsFixed(1)} km" 
-        : "${distanceInMeters.toInt()} m";
-
+  void _showSpotDetail(Map<String, dynamic> spot, AssistantController controller) {
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(24),
@@ -117,42 +149,42 @@ class AssistantScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Icon(Icons.camera_alt, color: Colors.orangeAccent),
-                const SizedBox(width: 8),
-                Text(spot['category'].toString().toUpperCase(), style: const TextStyle(color: Colors.orangeAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(color: Colors.orangeAccent.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                  child: Text((spot['category'] ?? 'General').toString().toUpperCase(), style: const TextStyle(color: Colors.orangeAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                ),
+                Row(
+                  children: [
+                    const Icon(Icons.star, color: Colors.amber, size: 16),
+                    const SizedBox(width: 4),
+                    Text("${spot['rating'] ?? '0.0'}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 12),
-            Text(spot['name'] ?? 'Spot Tersembunyi', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text(spot['address'] ?? '', style: const TextStyle(color: Colors.white54, fontSize: 14)),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const Icon(Icons.directions_walk, color: Colors.white38, size: 16),
-                const SizedBox(width: 8),
-                Text("Jarak: $distanceLabel", style: const TextStyle(color: Colors.white70)),
-              ],
-            ),
+            Text(spot['name'] ?? 'Spot Foto', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
             
-            // Tombol Buka Rute Peta
+            // [DIUBAH] Tombol sekarang memanggil fungsi gambar rute
             SizedBox(
               width: double.infinity,
-              height: 48,
+              height: 54,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 onPressed: () {
-                  Get.back(); // Tutup sheet
-                  _openMaps(spot['lat'], spot['lon']);
+                  Get.back(); // Tutup bottom sheet
+                  controller.getRouteToSpot(spot['lat'], spot['lon']); // Panggil rute di dalam peta
                 },
-                icon: const Icon(Icons.navigation),
-                label: const Text("Mulai Navigasi", style: TextStyle(fontWeight: FontWeight.bold)),
+                icon: const Icon(Icons.route),
+                label: const Text("LIHAT RUTE", style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             )
           ],
@@ -161,20 +193,6 @@ class AssistantScreen extends StatelessWidget {
     );
   }
 
-  // --- LOGIKA BUKA GOOGLE MAPS ---
-  void _openMaps(double? lat, double? lon) async {
-    if (lat == null || lon == null) return;
-    
-    final Uri url = Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lon");
-
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      Get.snackbar("Gagal", "Tidak dapat membuka aplikasi peta.");
-    }
-  }
-
-  // --- WIDGET HEADER MATAHARI ---
   Widget _buildSunHeader(AssistantController controller) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -186,7 +204,6 @@ class AssistantScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // 1. Bagian Dropdown Pemilih Zona Waktu
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -199,15 +216,11 @@ class AssistantScreen extends StatelessWidget {
                 underline: const SizedBox(), 
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                 items: ['WIB', 'WITA', 'WIT', 'LONDON'].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
+                  return DropdownMenuItem<String>(value: value, child: Text(value));
                 }).toList(),
                 onChanged: (newValue) {
                   if (newValue != null) {
                     controller.selectedTimeZone.value = newValue;
-                    // BACA INI: Paksa controller menghitung ulang waktu saat zona diganti
                     controller.updateDisplayedTime(); 
                   }
                 },
@@ -215,12 +228,9 @@ class AssistantScreen extends StatelessWidget {
             ],
           ),
           const Divider(color: Colors.white10, height: 16),
-          
-          // 2. Bagian Angka Waktunya
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              // BACA INI: Menggunakan .value agar UI bereaksi terhadap perubahan
               _sunInfo("Sunrise", controller.displaySunrise.value, Icons.wb_twilight),
               const VerticalDivider(color: Colors.white12),
               _sunInfo("Sunset", controller.displaySunset.value, Icons.wb_sunny_rounded),
