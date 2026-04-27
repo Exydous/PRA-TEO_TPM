@@ -81,131 +81,159 @@ class HomeScreen extends StatelessWidget {
             
             const SizedBox(height: 32),
             
-            // 2. AREA WORKSPACE (MENGAMBIL DARI CLOUD SUPABASE)
+            // 2. AREA WORKSPACE & SEARCH BAR
             Obx(() {
+              // Sembunyikan bagian bawah ini jika memang belum pernah punya draft sama sekali
               if (draftCtrl.savedDrafts.isEmpty) {
                 return const SizedBox.shrink(); 
               }
 
+              // Tarik data yang sudah difilter (Pencarian Lokal)
+              final draftsToDisplay = draftCtrl.filteredDrafts;
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // --- FITUR BARU: SEARCH BAR ---
+                  TextField(
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: "Cari nama draft...",
+                      hintStyle: const TextStyle(color: Colors.white38),
+                      prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                      filled: true,
+                      fillColor: const Color(0xFF1A1A1A),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    ),
+                    onChanged: (value) {
+                      draftCtrl.updateSearch(value); // Memicu filter di Controller
+                    },
+                  ),
+                  const SizedBox(height: 24),
+
                   const Text('Workspace Terakhir', style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   
-                  ListView.builder(
-                    physics: const NeverScrollableScrollPhysics(), 
-                    shrinkWrap: true, 
-                    itemCount: draftCtrl.savedDrafts.length,
-                    itemBuilder: (context, index) {
-                      final draft = draftCtrl.savedDrafts[index];
-                      
-                      return Obx(() {
-                        // Cek apakah ID dari database cloud ini sedang dipilih
-                        final isSelected = draftCtrl.selectedIds.contains(draft['id']);
-                        final isSelectionMode = draftCtrl.isSelectionMode.value;
+                  // Jika hasil pencarian kosong (tidak ada yang cocok)
+                  if (draftsToDisplay.isEmpty)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.only(top: 32.0),
+                        child: Text("Draft tidak ditemukan", style: TextStyle(color: Colors.white38, fontSize: 16)),
+                      ),
+                    )
+                  else
+                    // Menampilkan list berdasarkan 'draftsToDisplay' (bukan savedDrafts lagi)
+                    ListView.builder(
+                      physics: const NeverScrollableScrollPhysics(), 
+                      shrinkWrap: true, 
+                      itemCount: draftsToDisplay.length,
+                      itemBuilder: (context, index) {
+                        final draft = draftsToDisplay[index];
+                        
+                        return Obx(() {
+                          final isSelected = draftCtrl.selectedIds.contains(draft['id']);
+                          final isSelectionMode = draftCtrl.isSelectionMode.value;
 
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          decoration: BoxDecoration(
-                            color: isSelected ? Colors.orangeAccent.withOpacity(0.1) : const Color(0xFF1A1A1A),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: isSelected ? Colors.orangeAccent : Colors.orangeAccent.withOpacity(0.5),
-                              width: isSelected ? 2 : 1, 
-                            ),
-                          ),
-                          child: Stack(
-                            children: [
-                              // LAYER 1: KARTU UTAMA
-                              InkWell(
-                                borderRadius: BorderRadius.circular(16),
-                                onLongPress: () {
-                                  if (!isSelectionMode) {
-                                    // Panggil pakai ID
-                                    draftCtrl.startSelection(draft['id']);
-                                  }
-                                },
-                                onTap: () {
-                                  if (isSelectionMode) {
-                                    // Panggil pakai ID
-                                    draftCtrl.toggleSelection(draft['id']);
-                                  } else {
-                                    // Buka draft untuk diedit
-                                    editorCtrl.resumeDraft(draft);
-                                  }
-                                },
-                                child: Row(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: const BorderRadius.horizontal(left: Radius.circular(15)), 
-                                      // --- PERUBAHAN: IMAGE NETWORK DARI SUPABASE ---
-                                      child: Image.network(
-                                        draft['image_url'],
-                                        width: 100, 
-                                        height: 120,
-                                        fit: BoxFit.cover,
-                                        loadingBuilder: (context, child, loadingProgress) {
-                                          if (loadingProgress == null) return child;
-                                          return Container(
-                                            width: 100, height: 120, color: Colors.grey[900], 
-                                            child: const Center(child: CircularProgressIndicator(color: Colors.orangeAccent, strokeWidth: 2))
-                                          );
-                                        },
-                                        errorBuilder: (context, error, stackTrace) => Container(
-                                          width: 100, height: 120, color: Colors.grey[900], 
-                                          child: const Icon(Icons.broken_image, color: Colors.white54)
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              // Sesuaikan dengan nama kolom Supabase
-                                              draft['draft_name'] ?? 'Tanpa Nama',
-                                              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                                              maxLines: 2, 
-                                              overflow: TextOverflow.ellipsis, 
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Text('Exposure: ${(draft['exposure'] ?? 0).toInt()}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
-                                            Text('Saturation: ${(draft['saturation'] ?? 0).toInt()}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    // Ikon Panah (>)
-                                    const Padding(
-                                      padding: EdgeInsets.only(right: 16.0),
-                                      child: Icon(Icons.chevron_right, color: Colors.orangeAccent),
-                                    ),
-                                  ],
-                                ),
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: isSelected ? Colors.orangeAccent.withOpacity(0.1) : const Color(0xFF1A1A1A),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isSelected ? Colors.orangeAccent : Colors.orangeAccent.withOpacity(0.5),
+                                width: isSelected ? 2 : 1, 
                               ),
-
-                              // LAYER 2: KOTAK CENTANG
-                              if (isSelectionMode)
-                                Positioned(
-                                  top: 10,
-                                  right: 10,
-                                  child: IgnorePointer(
-                                    child: isSelected
-                                        ? const Icon(Icons.check_box, color: Colors.orangeAccent, size: 28)
-                                        : const Icon(Icons.check_box_outline_blank, color: Colors.white54, size: 28),
+                            ),
+                            child: Stack(
+                              children: [
+                                // LAYER 1: KARTU UTAMA
+                                InkWell(
+                                  borderRadius: BorderRadius.circular(16),
+                                  onLongPress: () {
+                                    if (!isSelectionMode) {
+                                      draftCtrl.startSelection(draft['id']);
+                                    }
+                                  },
+                                  onTap: () {
+                                    if (isSelectionMode) {
+                                      draftCtrl.toggleSelection(draft['id']);
+                                    } else {
+                                      editorCtrl.resumeDraft(draft);
+                                    }
+                                  },
+                                  child: Row(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: const BorderRadius.horizontal(left: Radius.circular(15)), 
+                                        child: Image.network(
+                                          draft['image_url'],
+                                          width: 100, 
+                                          height: 120,
+                                          fit: BoxFit.cover,
+                                          loadingBuilder: (context, child, loadingProgress) {
+                                            if (loadingProgress == null) return child;
+                                            return Container(
+                                              width: 100, height: 120, color: Colors.grey[900], 
+                                              child: const Center(child: CircularProgressIndicator(color: Colors.orangeAccent, strokeWidth: 2))
+                                            );
+                                          },
+                                          errorBuilder: (context, error, stackTrace) => Container(
+                                            width: 100, height: 120, color: Colors.grey[900], 
+                                            child: const Icon(Icons.broken_image, color: Colors.white54)
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                draft['draft_name'] ?? 'Tanpa Nama',
+                                                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                                maxLines: 2, 
+                                                overflow: TextOverflow.ellipsis, 
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Text('Exposure: ${(draft['exposure'] ?? 0).toInt()}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                                              Text('Saturation: ${(draft['saturation'] ?? 0).toInt()}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      const Padding(
+                                        padding: EdgeInsets.only(right: 16.0),
+                                        child: Icon(Icons.chevron_right, color: Colors.orangeAccent),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                            ],
-                          ),
-                        );
-                      }); 
-                    },
-                  ),
+
+                                // LAYER 2: KOTAK CENTANG
+                                if (isSelectionMode)
+                                  Positioned(
+                                    top: 10,
+                                    right: 10,
+                                    child: IgnorePointer(
+                                      child: isSelected
+                                          ? const Icon(Icons.check_box, color: Colors.orangeAccent, size: 28)
+                                          : const Icon(Icons.check_box_outline_blank, color: Colors.white54, size: 28),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        }); 
+                      },
+                    ),
                 ],
               );
             }),

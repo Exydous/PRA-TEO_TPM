@@ -8,7 +8,7 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Memanggil AuthController untuk logika Supabase
+    // Memanggil AuthController untuk logika Supabase & Biometrik
     final AuthController controller = Get.put(AuthController());
 
     return Scaffold(
@@ -59,7 +59,7 @@ class LoginScreen extends StatelessWidget {
                     style: const TextStyle(color: AppColors.textMain),
                     decoration: InputDecoration(
                       labelText: 'Your Name',
-                      hintText: 'First and last name', // Placeholder sesuai permintaan
+                      hintText: 'First and last name', 
                       hintStyle: const TextStyle(color: Colors.white24),
                       prefixIcon: const Icon(Icons.person_outline, color: AppColors.textSecondary),
                       border: OutlineInputBorder(
@@ -97,7 +97,7 @@ class LoginScreen extends StatelessWidget {
                 // --- 3. INPUT PASSWORD (Selalu muncul) ---
                 TextField(
                   controller: controller.passwordController, 
-                  obscureText: true, // Menyamarkan ketikan password
+                  obscureText: true, 
                   style: const TextStyle(color: AppColors.textMain),
                   decoration: InputDecoration(
                     labelText: 'Password',
@@ -141,11 +141,10 @@ class LoginScreen extends StatelessWidget {
                 SizedBox(
                   height: 50,
                   child: ElevatedButton(
-                    // Tombol dimatikan saat sedang loading
                     onPressed: controller.isLoading.value ? null : controller.submit,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.black, // Warna teks di dalam tombol
+                      foregroundColor: Colors.black, 
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -184,14 +183,17 @@ class LoginScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // --- TOMBOL BIOMETRIK (Hanya tampil di mode LOGIN) ---
-                if (controller.isLoginMode.value) ...[
+                // --- TOMBOL BIOMETRIK (Pintar) ---
+                // Hanya muncul di mode LOGIN, JIKA HP mendukung, DAN user pernah login
+                if (controller.isLoginMode.value && 
+                    controller.isBiometricSupported.value && 
+                    controller.hasSavedUser.value) ...[
                   const Row(
                     children: [
                       Expanded(child: Divider(color: Colors.white24)),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Text('ATAU', style: TextStyle(color: AppColors.textSecondary)),
+                        child: Text('ATAU MASUK CEPAT', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                       ),
                       Expanded(child: Divider(color: Colors.white24)),
                     ],
@@ -199,12 +201,10 @@ class LoginScreen extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   OutlinedButton.icon(
-                    onPressed: () {
-                      Get.snackbar('Info', 'Fitur Biometrik akan segera hadir!', snackPosition: SnackPosition.BOTTOM);
-                    },
+                    onPressed: controller.loginWithBiometric, // Panggil fungsi di AuthController
                     icon: const Icon(Icons.fingerprint, size: 28),
                     label: const Text(
-                      'Login dengan Biometrik',
+                      'Sentuh Sensor Sidik Jari',
                       style: TextStyle(fontSize: 16),
                     ),
                     style: OutlinedButton.styleFrom(

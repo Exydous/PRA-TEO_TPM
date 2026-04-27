@@ -13,7 +13,6 @@ import 'package:light/light.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart'; 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:path_provider/path_provider.dart';
-
 import '../../../core/routes/app_routes.dart';
 
 class EditorState {
@@ -372,12 +371,25 @@ class DraftController extends GetxController {
   var savedDrafts = <Map<String, dynamic>>[].obs;
   
   var isSelectionMode = false.obs;
-  var selectedIds = <String>[].obs; 
+  var selectedIds = <String>[].obs;
+  var searchQuery = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
     loadDrafts();
+  }
+
+  List<Map<String, dynamic>> get filteredDrafts {
+    if (searchQuery.value.isEmpty) {
+      return savedDrafts; // Tampilkan semua jika kotak pencarian kosong
+    }
+    // Saring berdasarkan nama draft (mengabaikan huruf besar/kecil)
+    return savedDrafts.where((draft) {
+      String name = (draft['draft_name'] ?? '').toString().toLowerCase();
+      String query = searchQuery.value.toLowerCase();
+      return name.contains(query);
+    }).toList();
   }
 
   // --- [DIUBAH] MEMUAT DRAFT SESUAI EMAIL LOKAL ---
@@ -486,4 +498,9 @@ class DraftController extends GetxController {
       )
     );
   }
+
+void updateSearch(String query) {
+    searchQuery.value = query;
+  }
+
 }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/profile_controller.dart';
-import '../../editor/controllers/editor_controller.dart'; // Import EditorController untuk data preset
+import '../../editor/controllers/editor_controller.dart'; 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/routes/app_routes.dart'; // Tambahkan ini jika AppRoutes digunakan
+import '../../../core/routes/app_routes.dart'; 
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -25,7 +25,6 @@ class ProfileScreen extends StatelessWidget {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          // Tombol Logout dipindah ke atas agar lebih rapi
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.redAccent),
             onPressed: () => _showLogoutDialog(profileController),
@@ -62,32 +61,57 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // --- WIDGET HEADER PROFIL ---
+  // --- WIDGET HEADER PROFIL (DIPERBAIKI) ---
   Widget _buildProfileHeader(ProfileController controller) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
       child: Row(
         children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.2),
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primary, width: 2),
-            ),
-            child: Obx(() {
-              // Ambil huruf pertama dari nama untuk dijadikan avatar
-              String initial = controller.userName.value.isNotEmpty 
-                  ? controller.userName.value[0].toUpperCase() 
-                  : 'P';
-              return Center(
-                child: Text(
-                  initial,
-                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.primary),
+          // [DIUBAH] Avatar dengan Tombol Kamera
+          Stack(
+            children: [
+              Obx(() => CircleAvatar(
+                radius: 36, // Ukuran disesuaikan agar proporsional
+                backgroundColor: AppColors.primary.withOpacity(0.2),
+                backgroundImage: controller.profileImageUrl.value.isNotEmpty
+                    ? NetworkImage(controller.profileImageUrl.value)
+                    : null,
+                child: controller.profileImageUrl.value.isEmpty
+                    ? Text(
+                        controller.userName.value.isNotEmpty 
+                            ? controller.userName.value[0].toUpperCase() 
+                            : 'P',
+                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.primary),
+                      )
+                    : null,
+              )),
+              
+              // Tombol Kamera/Edit kecil di sudut kanan bawah
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: GestureDetector(
+                  onTap: () {
+                    if (!controller.isUploading.value) {
+                      controller.pickAndUploadImage();
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFF0A0B0F), width: 2), // Efek outline gelap
+                    ),
+                    child: Obx(() => controller.isUploading.value
+                        ? const SizedBox(
+                            width: 14, height: 14,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Icon(Icons.camera_alt, color: Colors.white, size: 14)),
+                  ),
                 ),
-              );
-            }),
+              ),
+            ],
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -158,8 +182,7 @@ class ProfileScreen extends StatelessWidget {
                 icon: const Icon(Icons.storefront),
                 label: const Text("Kunjungi Store", style: TextStyle(fontWeight: FontWeight.bold)),
                 onPressed: () {
-                  // Arahkan ke Preset Store (Sesuaikan dengan AppRoutes kamu)
-                  Get.toNamed(AppRoutes.PRESET_STORE); // Asumsi route bernama PRESET_STORE
+                  Get.toNamed(AppRoutes.PRESET_STORE); 
                 },
               )
             ],
