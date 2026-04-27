@@ -37,7 +37,6 @@ lib
 │   │   ├── controllers
 │   │   │   └── profile_controller.dart
 │   │   └── screens
-│   │       ├── feedback_screen.dart
 │   │       └── profile_screen.dart
 │   └── utilities
 │       ├── photographer_assistant

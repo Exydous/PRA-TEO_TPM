@@ -61,20 +61,20 @@
 
 - Fitur di tab drafts untuk menghapus secara langsung
 
-🚧 Fitur yang Belum Dibuat (Misi Final)
+9. Pencarian
 
-1. Pencarian
+- Pencarian untuk draft edit
 
-- Bisa dibuat untuk preset store, drafts, atau forum feedback
-
-2. Notifikasi
-
-- Daily reminder atau balasan forum feedback
-
-3. Login Biometric
+10. Login Biometric
 
 - Menggunakan sidik jari
 
-4. Profile Picture
+11. Profile Picture
 
 - User dapat mengunggah profile picture
+
+🚧 Fitur yang Belum Dibuat (Misi Final)
+
+1. Notifikasi
+
+- Daily reminder atau balasan forum feedback
