@@ -22,7 +22,7 @@ class HomeScreen extends StatelessWidget {
           title: Text(
             draftCtrl.isSelectionMode.value 
                 ? '${draftCtrl.selectedIds.length} Dipilih'
-                : 'Galeri & Workspace', 
+                : 'Gallery & Workspace', 
             style: const TextStyle(color: Colors.white)
           ),
           leading: draftCtrl.isSelectionMode.value
@@ -36,12 +36,12 @@ class HomeScreen extends StatelessWidget {
                   if (draftCtrl.selectedIds.length == 1)
                     IconButton(
                       icon: const Icon(Icons.edit, color: Colors.white),
-                      tooltip: 'Ganti Nama',
+                      tooltip: 'Change Name',
                       onPressed: draftCtrl.showRenameDialog,
                     ),
                   IconButton(
                     icon: const Icon(Icons.delete, color: Colors.redAccent),
-                    tooltip: 'Hapus Draft',
+                    tooltip: 'Delete Draft',
                     onPressed: draftCtrl.deleteSelectedDrafts,
                   ),
                   const SizedBox(width: 8),
@@ -73,7 +73,7 @@ class HomeScreen extends StatelessWidget {
                   children: const [
                     Icon(Icons.add_photo_alternate, size: 48, color: Colors.blueAccent),
                     SizedBox(height: 12),
-                    Text('Edit Foto Baru', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text('Edit Photos', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -98,7 +98,7 @@ class HomeScreen extends StatelessWidget {
                   TextField(
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                      hintText: "Cari nama draft...",
+                      hintText: "Search draft...",
                       hintStyle: const TextStyle(color: Colors.white38),
                       prefixIcon: const Icon(Icons.search, color: Colors.white54),
                       filled: true,
@@ -115,7 +115,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  const Text('Workspace Terakhir', style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold)),
+                  const Text('Last Workspace', style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   
                   // Jika hasil pencarian kosong (tidak ada yang cocok)
@@ -123,7 +123,7 @@ class HomeScreen extends StatelessWidget {
                     const Center(
                       child: Padding(
                         padding: EdgeInsets.only(top: 32.0),
-                        child: Text("Draft tidak ditemukan", style: TextStyle(color: Colors.white38, fontSize: 16)),
+                        child: Text("Draft not found", style: TextStyle(color: Colors.white38, fontSize: 16)),
                       ),
                     )
                   else
@@ -197,7 +197,7 @@ class HomeScreen extends StatelessWidget {
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
                                               Text(
-                                                draft['draft_name'] ?? 'Tanpa Nama',
+                                                draft['draft_name'] ?? 'No Name',
                                                 style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                                                 maxLines: 2, 
                                                 overflow: TextOverflow.ellipsis, 

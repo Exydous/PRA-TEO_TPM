@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:tugas_akhir/core/routes/app_routes.dart';
 import 'package:tugas_akhir/features/editor/controllers/editor_controller.dart';
 import '../controllers/preset_store_controller.dart';
 
@@ -10,7 +11,6 @@ class PresetStoreScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Inisialisasi Controller
     final controller = Get.put(PresetStoreController());
-    // final editorController = Get.put(EditorController()); // Memastikan EditorController aktif
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -89,13 +89,12 @@ class PresetStoreScreen extends StatelessWidget {
                 return GridView.builder(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 0.65, // Disesuaikan karena butuh ruang untuk gambar web
+                    childAspectRatio: 0.65, 
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                   ),
                   itemCount: controller.presets.length,
                   itemBuilder: (context, index) {
-                    // Tipe datanya sekarang Map, bukan PresetItem lagi
                     final preset = controller.presets[index];
                     return _buildPresetCard(controller, preset);
                   },
@@ -108,7 +107,7 @@ class PresetStoreScreen extends StatelessWidget {
     );
   }
 
-  // Parameter diubah untuk menerima tipe data Map (JSON dari Supabase)
+  // Parameter menerima tipe data Map (JSON dari Supabase)
   Widget _buildPresetCard(PresetStoreController controller, Map<String, dynamic> preset) {
     return Container(
       decoration: BoxDecoration(
@@ -170,7 +169,6 @@ class PresetStoreScreen extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Loading kecil saat API FreeCurrency sedang menghitung kurs
                       Obx(() => controller.isCurrencyLoading.value 
                         ? const SizedBox(
                             height: 16, width: 16, 
@@ -183,7 +181,7 @@ class PresetStoreScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       
-                      // --- LOGIKA TOMBOL BERUBAH (BELI vs OWNED) ---
+                      // --- LOGIKA TOMBOL ---
                       Obx(() {
                         // Mengecek apakah ID preset ini sudah ada di daftar ownedPresets
                         final EditorController editorController = Get.find<EditorController>();
@@ -214,7 +212,8 @@ class PresetStoreScreen extends StatelessWidget {
                             width: double.infinity,
                             height: 32,
                             child: ElevatedButton(
-                              onPressed: () => controller.buyPreset(preset),
+                              // --- [DIUBAH] Navigasi ke PaymentScreen dan membawa data preset ---
+                              onPressed: () => Get.toNamed(AppRoutes.PAYMENT, arguments: preset),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.white, 
                                 foregroundColor: Colors.black,

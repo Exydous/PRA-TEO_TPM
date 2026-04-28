@@ -33,6 +33,11 @@ lib
 │   │   │   └── main_controller.dart
 │   │   └── screens
 │   │       └── main_screen.dart
+│   ├── payment
+│   │   ├── controllers
+│   │   │   └── payment_controller.dart
+│   │   └── screens
+│   │       └── payment_screen.dart
 │   ├── profiles
 │   │   ├── controllers
 │   │   │   └── profile_controller.dart
@@ -60,4 +65,5 @@ lib
 └── services
     ├── assistant_service.dart
     ├── color_transfer_service.dart
-    └── currency_service.dart
+    ├── currency_service.dart
+    └── notification_service.dart

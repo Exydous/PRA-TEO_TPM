@@ -12,9 +12,9 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Inisialisasi kedua controller
     final ProfileController profileController = Get.put(ProfileController());
-    final EditorController editorController = Get.put(EditorController());
-
-    editorController.loadOwnedPresets();
+    
+    // [PENTING] permanent: true menjaga agar memori tidak hilang saat pindah tab
+    final EditorController editorController = Get.put(EditorController(), permanent: true);
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0B0F), // Tema Gelap
@@ -61,17 +61,16 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // --- WIDGET HEADER PROFIL (DIPERBAIKI) ---
+  // --- WIDGET HEADER PROFIL ---
   Widget _buildProfileHeader(ProfileController controller) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
       child: Row(
         children: [
-          // [DIUBAH] Avatar dengan Tombol Kamera
           Stack(
             children: [
               Obx(() => CircleAvatar(
-                radius: 36, // Ukuran disesuaikan agar proporsional
+                radius: 36, 
                 backgroundColor: AppColors.primary.withOpacity(0.2),
                 backgroundImage: controller.profileImageUrl.value.isNotEmpty
                     ? NetworkImage(controller.profileImageUrl.value)
@@ -85,8 +84,6 @@ class ProfileScreen extends StatelessWidget {
                       )
                     : null,
               )),
-              
-              // Tombol Kamera/Edit kecil di sudut kanan bawah
               Positioned(
                 bottom: 0,
                 right: 0,
@@ -101,7 +98,7 @@ class ProfileScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColors.primary,
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFF0A0B0F), width: 2), // Efek outline gelap
+                      border: Border.all(color: const Color(0xFF0A0B0F), width: 2), 
                     ),
                     child: Obx(() => controller.isUploading.value
                         ? const SizedBox(
@@ -158,6 +155,7 @@ class ProfileScreen extends StatelessWidget {
 
   // --- WIDGET GRID KOLEKSI ---
   Widget _buildCollectionGrid(EditorController controller) {
+    // [PENTING] Obx akan membuat widget ini selalu mendengar perubahan dari controller
     return Obx(() {
       if (controller.isPresetsLoading.value) {
         return const Center(child: CircularProgressIndicator(color: AppColors.primary));

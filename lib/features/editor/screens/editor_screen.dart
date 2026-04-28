@@ -47,7 +47,7 @@ class EditorScreen extends StatelessWidget {
           
           IconButton(
             icon: const Icon(Icons.restart_alt, color: Colors.orangeAccent), 
-            tooltip: 'Reset Semua',
+            tooltip: 'Reset All Changes',
             onPressed: () => controller.resetEffects(fromSensor: false),
           ),
           
@@ -77,7 +77,7 @@ class EditorScreen extends StatelessWidget {
                           imageFile, 
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) => const Center(
-                            child: Text("Gagal memuat gambar", style: TextStyle(color: Colors.white54)),
+                            child: Text("Failed to load image", style: TextStyle(color: Colors.white54)),
                           ),
                         ),
                       ),
@@ -112,8 +112,8 @@ class EditorScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Transfer Gaya Warna', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-                        Text('Tiru warna dari foto/scene film lain', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                        Text('Transfer Color Style', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                        Text('Copy colors from other photos/movies', style: TextStyle(color: Colors.white54, fontSize: 12)),
                       ],
                     ),
                   ),
@@ -130,7 +130,7 @@ class EditorScreen extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         ),
-                        child: const Text('Pilih Foto', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        child: const Text('Select Photo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                       )
                   ),
                 ],
@@ -206,7 +206,7 @@ class EditorScreen extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text("Pilih alat untuk rasio dan rotasi foto", style: TextStyle(color: Colors.white54)),
+        const Text("Select tool for aspect ratio and rotation", style: TextStyle(color: Colors.white54)),
         const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -353,7 +353,6 @@ class EditorScreen extends StatelessWidget {
   }
 
   // --- FUNGSI BOTTOM SHEET MY PRESETS ---
-  // --- FUNGSI BOTTOM SHEET MY PRESETS ---
   void _showPresetsBottomSheet(BuildContext context, EditorController controller) {
     showModalBottomSheet(
       context: context,
@@ -390,7 +389,7 @@ class EditorScreen extends StatelessWidget {
                             const Icon(Icons.sentiment_dissatisfied, color: Colors.white38, size: 30),
                             const SizedBox(height: 8),
                             const Text(
-                              "Koleksi kosong. Dapatkan di Store!",
+                              "Collections Empty. Get them from the Store!",
                               textAlign: TextAlign.center,
                               style: TextStyle(color: Colors.white54, fontSize: 12),
                             ),

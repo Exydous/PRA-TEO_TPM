@@ -4,7 +4,7 @@ import 'dart:ui' as ui;
 import 'dart:typed_data'; 
 import 'package:flutter/rendering.dart'; 
 import 'package:get/get.dart';
-import 'package:hive_flutter/hive_flutter.dart'; // [BARU] Import Hive
+import 'package:hive_flutter/hive_flutter.dart'; 
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +34,6 @@ enum EditSubMenu { light, color }
 
 class EditorController extends GetxController {
   final supabase = Supabase.instance.client; 
-  // [BARU] Panggil Kotak Rahasia Hive
   final Box authBox = Hive.box('authBox');
   
   Rx<File?> selectedImage = Rx<File?>(null);
@@ -59,11 +58,11 @@ class EditorController extends GetxController {
   Light? _lightSensor;
   StreamSubscription<int>? _lightSubscription;
 
-  final ImagePicker _picker = ImagePicker();
-  final GlobalKey exportKey = GlobalKey();
-
   var ownedPresets = <Map<String, dynamic>>[].obs;
   var isPresetsLoading = false.obs;
+
+  final ImagePicker _picker = ImagePicker();
+  final GlobalKey exportKey = GlobalKey();
 
   @override
   void onInit() {
@@ -80,26 +79,35 @@ class EditorController extends GetxController {
     super.onClose();
   }
 
-  // --- MENGAMBIL PRESET DARI SUPABASE MENGGUNAKAN HIVE ---
+  // --- [DIUBAH] MENARIK PRESET DARI SUPABASE SESUAI STRUKTUR BARU ---
+  // --- [DIUBAH] MEMUAT KOLEKSI DARI TABEL ASLI ANDA ---
   Future<void> loadOwnedPresets() async {
-    // Ambil email dari Hive
-    String currentEmail = Hive.box('authBox').get('currentUser', defaultValue: '');
+    // 1. Ambil email user dari Hive
+    String currentEmail = authBox.get('currentUser', defaultValue: '');
     if (currentEmail.isEmpty) return;
 
     try {
       isPresetsLoading.value = true;
-      // Filter menggunakan Email, bukan user.id lama
+      
+      // 2. Tarik data dari user_presets. 
+      // Karena Anda menyimpan relasi, kita tarik kolom 'presets(*)' 
+      // agar detail preset (exposure, name, thumbnail) ikut terbawa.
       final response = await supabase
           .from('user_presets')
           .select('presets (*)') 
-          .eq('user_id', currentEmail)
-          .order('purchased_at', ascending: false);
-
-      ownedPresets.value = List<Map<String, dynamic>>.from(
-        response.map((e) => e['presets'])
-      );
+          .eq('user_id', currentEmail);
+          
+        // 3. Masukkan data ke list ownedPresets. 
+        // Kita ambil isi dari object 'presets' yang ada di dalam list response.
+        ownedPresets.value = response
+            .where((e) => e['presets'] != null)
+            .map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e['presets']))
+            .toList();
+            
+        debugPrint("✅ Berhasil memuat ${ownedPresets.length} preset dari Supabase untuk $currentEmail");
+      
     } catch (e) {
-      debugPrint("Gagal memuat koleksi preset: $e");
+      debugPrint("❌ Gagal memuat koleksi preset: $e");
     } finally {
       isPresetsLoading.value = false;
     }
@@ -117,7 +125,7 @@ class EditorController extends GetxController {
     saveState(); 
     
     Get.snackbar(
-      '✨ Preset Aktif', 
+      '✨Preset Applied', 
       'Menerapkan gaya $name', 
       snackPosition: SnackPosition.TOP, 
       backgroundColor: Colors.black87, 
@@ -228,15 +236,12 @@ class EditorController extends GetxController {
     }
   }
 
-  // --- [DIUBAH] MENYIMPAN DRAFT MENGGUNAKAN EMAIL LOKAL ---
   Future<void> saveToCloud(String draftName) async {
     if (selectedImage.value == null) return;
     
-    // Ambil email dari Hive
     String currentEmail = authBox.get('currentUser', defaultValue: '');
     if (currentEmail.isEmpty) throw Exception("User belum login");
 
-    // Nama file sekarang menggunakan email agar unik
     String safeEmail = currentEmail.replaceAll('@', '_').replaceAll('.', '_');
     String fileName = '${safeEmail}_${DateTime.now().millisecondsSinceEpoch}.jpg';
     
@@ -244,7 +249,7 @@ class EditorController extends GetxController {
     String newImageUrl = supabase.storage.from('draft_images').getPublicUrl(fileName);
 
     Map<String, dynamic> draftData = {
-      'user_id': currentEmail, // Simpan email ke kolom user_id
+      'user_id': currentEmail, 
       'draft_name': draftName,
       'image_url': newImageUrl,
       'exposure': exposure.value,
@@ -282,10 +287,10 @@ class EditorController extends GetxController {
       Get.back(); 
       Get.back();
       
-      Get.snackbar('💾 Disimpan', 'Draft "$finalName" tersimpan aman di Cloud.', backgroundColor: Colors.blueGrey.shade900, colorText: Colors.white, snackPosition: SnackPosition.TOP);
+      Get.snackbar('💾 Saved', 'Draft "$finalName" saved successfully to Cloud.', backgroundColor: Colors.blueGrey.shade900, colorText: Colors.white, snackPosition: SnackPosition.TOP);
     } catch (e) {
       Get.back(); 
-      Get.snackbar('❌ Gagal', 'Gagal menyimpan draft: $e', backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar('❌ Failed', 'Failed to save draft: $e', backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 
@@ -295,15 +300,15 @@ class EditorController extends GetxController {
       AlertDialog(
         backgroundColor: const Color(0xFF1A1A1A),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Simpan ke Cloud?', style: TextStyle(color: Colors.white)),
+        title: const Text('Save to Cloud?', style: TextStyle(color: Colors.white)),
         content: TextField(
           controller: nameController,
           style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(hintText: 'Nama Draft', hintStyle: TextStyle(color: Colors.white38), filled: true, fillColor: Colors.black),
+          decoration: const InputDecoration(hintText: 'Draft Name', hintStyle: TextStyle(color: Colors.white38), filled: true, fillColor: Colors.black),
         ),
         actions: [
-          TextButton(onPressed: () { Get.back(); resetAllSettings(); selectedImage.value = null; Get.back(); }, child: const Text('Buang', style: TextStyle(color: Colors.redAccent))),
-          ElevatedButton(onPressed: () { _processSavingDraft(nameController.text.trim()); }, child: const Text('Simpan')),
+          TextButton(onPressed: () { Get.back(); resetAllSettings(); selectedImage.value = null; Get.back(); }, child: const Text('Delete', style: TextStyle(color: Colors.redAccent))),
+          ElevatedButton(onPressed: () { _processSavingDraft(nameController.text.trim()); }, child: const Text('Save')),
         ],
       )
     );
@@ -355,7 +360,7 @@ class EditorController extends GetxController {
       Get.toNamed(AppRoutes.EDITOR); 
     } catch (e) {
       Get.back(); 
-      Get.snackbar('Error', 'Gagal mengunduh draft dari cloud: $e', backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar('Error', 'Failed to download draft from cloud: $e', backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 }
@@ -365,7 +370,6 @@ class EditorController extends GetxController {
 // ==========================================
 class DraftController extends GetxController {
   final supabase = Supabase.instance.client;
-  // [BARU] Panggil Hive juga di sini
   final Box authBox = Hive.box('authBox');
   
   var savedDrafts = <Map<String, dynamic>>[].obs;
@@ -382,9 +386,8 @@ class DraftController extends GetxController {
 
   List<Map<String, dynamic>> get filteredDrafts {
     if (searchQuery.value.isEmpty) {
-      return savedDrafts; // Tampilkan semua jika kotak pencarian kosong
+      return savedDrafts; 
     }
-    // Saring berdasarkan nama draft (mengabaikan huruf besar/kecil)
     return savedDrafts.where((draft) {
       String name = (draft['draft_name'] ?? '').toString().toLowerCase();
       String query = searchQuery.value.toLowerCase();
@@ -392,7 +395,6 @@ class DraftController extends GetxController {
     }).toList();
   }
 
-  // --- [DIUBAH] MEMUAT DRAFT SESUAI EMAIL LOKAL ---
   Future<void> loadDrafts() async {
     String currentEmail = authBox.get('currentUser', defaultValue: '');
     if (currentEmail.isEmpty) return;
@@ -401,12 +403,12 @@ class DraftController extends GetxController {
       final response = await supabase
           .from('drafts')
           .select()
-          .eq('user_id', currentEmail) // [PENTING] Filter agar tidak mengambil data orang lain
+          .eq('user_id', currentEmail) 
           .order('created_at', ascending: false);
       
       savedDrafts.value = List<Map<String, dynamic>>.from(response);
     } catch (e) {
-      debugPrint("Gagal mengambil draft: $e");
+      debugPrint("Failed to fetch drafts: $e");
     }
   }
   
@@ -432,10 +434,10 @@ class DraftController extends GetxController {
       AlertDialog(
         backgroundColor: const Color(0xFF1A1A1A),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Hapus Draft?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: Text('Yakin ingin menghapus ${selectedIds.length} draft yang dipilih dari Cloud?', style: const TextStyle(color: Colors.white70)),
+        title: const Text('Delete Draft?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Text('Are you sure you want to delete ${selectedIds.length} selected drafts from the Cloud?', style: const TextStyle(color: Colors.white70)),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Batal', style: TextStyle(color: Colors.white54))),
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel', style: TextStyle(color: Colors.white54))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
             onPressed: () async {
@@ -449,13 +451,13 @@ class DraftController extends GetxController {
                 cancelSelection();
                 await loadDrafts(); 
                 Get.back(); 
-                Get.snackbar('🗑️ Terhapus', 'Draft berhasil dihapus dari Cloud.', backgroundColor: Colors.blueGrey.shade900, colorText: Colors.white);
+                Get.snackbar('🗑️ Deleted', 'Draft successfully deleted from Cloud.', backgroundColor: Colors.blueGrey.shade900, colorText: Colors.white);
               } catch (e) {
                 Get.back();
-                Get.snackbar('Error', 'Gagal menghapus draft: $e', backgroundColor: Colors.red, colorText: Colors.white);
+                Get.snackbar('Error', 'Failed to delete draft: $e', backgroundColor: Colors.red, colorText: Colors.white);
               }
             },
-            child: const Text('Hapus', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.bold)),
           )
         ],
       )
@@ -473,34 +475,33 @@ class DraftController extends GetxController {
       AlertDialog(
         backgroundColor: const Color(0xFF1A1A1A),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Ganti Nama Draft', style: TextStyle(color: Colors.white)),
+        title: const Text('Rename Draft', style: TextStyle(color: Colors.white)),
         content: TextField(
           controller: nameCtrl,
           style: const TextStyle(color: Colors.white),
           decoration: const InputDecoration(filled: true, fillColor: Colors.black),
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Batal', style: TextStyle(color: Colors.white54))),
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel', style: TextStyle(color: Colors.white54))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent, foregroundColor: Colors.black),
             onPressed: () async {
               Get.back(); 
-              String newName = nameCtrl.text.trim().isEmpty ? "Tanpa Nama" : nameCtrl.text.trim();
+              String newName = nameCtrl.text.trim().isEmpty ? "No Name" : nameCtrl.text.trim();
               
               await supabase.from('drafts').update({'draft_name': newName}).eq('id', targetId);
               
               cancelSelection();
               loadDrafts(); 
             },
-            child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text('Save', style: TextStyle(fontWeight: FontWeight.bold)),
           )
         ],
       )
     );
   }
 
-void updateSearch(String query) {
+  void updateSearch(String query) {
     searchQuery.value = query;
   }
-
 }

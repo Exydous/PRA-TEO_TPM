@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:tugas_akhir/features/payment/screens/payment_screen.dart';
 import 'app_routes.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/main/screens/main_screen.dart';
@@ -19,10 +20,13 @@ class AppPages {
       name: AppRoutes.PRESET_STORE,
       page: () => const PresetStoreScreen(),
     ),
-    // TAMBAHKAN BLOK INI
     GetPage(
       name: AppRoutes.EDITOR,
       page: () => const EditorScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.PAYMENT,
+      page: () => PaymentScreen(),
     ),
   ];
 }

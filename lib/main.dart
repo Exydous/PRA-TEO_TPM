@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; 
 import 'package:flutter_dotenv/flutter_dotenv.dart'; 
 import 'package:hive_flutter/hive_flutter.dart'; // [BARU] Import Hive
+import 'package:tugas_akhir/services/notification_service.dart';
 import 'core/routes/app_pages.dart';
 import 'core/routes/app_routes.dart';
 import 'core/theme/app_theme.dart';
@@ -13,6 +14,7 @@ Future<void> main() async {
   
   // 1. LOAD file .env terlebih dahulu
   await dotenv.load(fileName: ".env");
+  await NotificationService.init();
   
   // 2. INISIALISASI SUPABASE (TETAP DIPERTAHANKAN)
   // Digunakan murni sebagai gudang Preset & Draft (Akses Publik/Anon)
