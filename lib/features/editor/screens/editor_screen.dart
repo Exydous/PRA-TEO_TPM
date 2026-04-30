@@ -1,3 +1,4 @@
+import 'dart:async'; // [BARU] Wajib ditambahkan untuk menjalankan Timer
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/constants/app_colors.dart';
@@ -357,16 +358,15 @@ class EditorScreen extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF13151D),
-      isScrollControlled: true, // [BARU] Izinkan tinggi custom bekerja maksimal
+      isScrollControlled: true, 
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
-        // [BARU] Bungkus dengan SafeArea agar tidak menabrak tombol navigasi HP
         return SafeArea( 
           child: Container(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 10), // Padding bawah disesuaikan
-            height: 240, // [DIUBAH] Ditinggikan sedikit agar gambar & teks proporsional
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 10), 
+            height: 240, 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -403,46 +403,90 @@ class EditorScreen extends StatelessWidget {
                       itemCount: controller.ownedPresets.length,
                       itemBuilder: (context, index) {
                         final preset = controller.ownedPresets[index];
+                        // [BARU] Mengecek apakah ada timer untuk preset ini
+                        bool hasTimer = preset['expires_at'] != null;
+
                         return GestureDetector(
                           onTap: () {
                             controller.applyPreset(preset);
-                            Get.back(); // Tutup panel setelah preset dipilih
+                            // Get.back(); // [PENTING] HAPUS ATAU JADIKAN KOMENTAR BARIS INI!
+                            // Kenapa? Agar saat diklik, panel preset tidak langsung tertutup. 
+                            // Jadi Capt bisa melihat efek glowing-nya menyala dan bisa langsung klik preset lain untuk membandingkan warna.
                           },
-                          child: Container(
-                            width: 110, // [DIUBAH] Lebar sedikit dirampingkan
-                            margin: const EdgeInsets.only(right: 16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1A1C24),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.white12),
-                            ),
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: ClipRRect(
-                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                                    child: Image.network(
-                                      preset['thumbnail_url'] ?? '',
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      errorBuilder: (context, error, stackTrace) =>
-                                          const Icon(Icons.broken_image, color: Colors.white54),
+                          child: Obx(() {
+                            // [BARU] Cek apakah preset ini adalah preset yang sedang aktif
+                            bool isActive = controller.activePresetName.value == preset['name'];
+                            
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 300), // Efek nyala lampu mulus
+                              width: 110, 
+                              margin: const EdgeInsets.only(right: 16, bottom: 8, top: 8), // Tambah margin agar glowing tidak terpotong
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1A1C24),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  // Jika aktif, border ikut warna utama. Jika tidak, kembali ke aturan awal (orange/putih)
+                                  color: isActive 
+                                      ? AppColors.primary 
+                                      : (hasTimer ? Colors.orange.withOpacity(0.5) : Colors.white12), 
+                                  width: isActive ? 2 : (hasTimer ? 1.5 : 1)
+                                ),
+                                // [BARU] INI DIA MESIN GLOWING-NYA!
+                                boxShadow: isActive
+                                    ? [
+                                        BoxShadow(
+                                          color: AppColors.primary.withOpacity(0.6), // Warna cahaya
+                                          blurRadius: 15, // Seberapa menyebar cahayanya
+                                          spreadRadius: 2, // Ketebalan cahaya
+                                          offset: const Offset(0, 0), // Cahaya pas di tengah
+                                        )
+                                      ]
+                                    : [], // Jika tidak aktif, bayangan hilang
+                              ),
+                              child: Column(
+                                children: [
+                                  Expanded(
+                                    child: Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: const BorderRadius.vertical(top: Radius.circular(14)), // Disesuaikan sedikit
+                                          child: Image.network(
+                                            preset['thumbnail_url'] ?? '',
+                                            fit: BoxFit.cover,
+                                            width: double.infinity,
+                                            height: double.infinity,
+                                            errorBuilder: (context, error, stackTrace) =>
+                                                const Icon(Icons.broken_image, color: Colors.white54),
+                                          ),
+                                        ),
+                                        if (hasTimer)
+                                          Positioned(
+                                            top: 0,
+                                            right: 0,
+                                            child: PresetTimerBadge(expiresAt: preset['expires_at']),
+                                          ),
+                                      ],
                                     ),
                                   ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 8.0),
-                                  child: Text(
-                                    preset['name'] ?? 'Preset',
-                                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                                    maxLines: 1,
-                                    textAlign: TextAlign.center,
-                                    overflow: TextOverflow.ellipsis,
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 8.0),
+                                    child: Text(
+                                      preset['name'] ?? 'Preset',
+                                      style: TextStyle(
+                                        // Warna teks juga ikut menyala jika aktif
+                                        color: isActive ? AppColors.primary : Colors.white, 
+                                        fontSize: 12, 
+                                        fontWeight: FontWeight.bold
+                                      ),
+                                      maxLines: 1,
+                                      textAlign: TextAlign.center,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
+                                ],
+                              ),
+                            );
+                          }),
                         );
                       },
                     );
@@ -453,6 +497,78 @@ class EditorScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+// --- [BARU] WIDGET TIMER KOPASAN DARI PROFIL ---
+class PresetTimerBadge extends StatefulWidget {
+  final String expiresAt;
+  const PresetTimerBadge({super.key, required this.expiresAt});
+
+  @override
+  State<PresetTimerBadge> createState() => _PresetTimerBadgeState();
+}
+
+class _PresetTimerBadgeState extends State<PresetTimerBadge> {
+  late Timer _timer;
+  Duration _timeLeft = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateTimeLeft();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        _calculateTimeLeft();
+      }
+    });
+  }
+
+  void _calculateTimeLeft() {
+    final expiry = DateTime.parse(widget.expiresAt).toLocal();
+    final now = DateTime.now();
+    setState(() {
+      _timeLeft = expiry.isAfter(now) ? expiry.difference(now) : Duration.zero;
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_timeLeft.inSeconds <= 0) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.red.shade900,
+          borderRadius: const BorderRadius.only(topRight: Radius.circular(16), bottomLeft: Radius.circular(8)),
+        ),
+        child: const Text('Habis', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+      );
+    }
+    
+    String minutes = _timeLeft.inMinutes.remainder(60).toString().padLeft(2, '0');
+    String seconds = _timeLeft.inSeconds.remainder(60).toString().padLeft(2, '0');
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade800.withOpacity(0.9),
+        borderRadius: const BorderRadius.only(topRight: Radius.circular(16), bottomLeft: Radius.circular(8)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.timer, color: Colors.white, size: 10),
+          const SizedBox(width: 2),
+          Text('$minutes:$seconds', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 }

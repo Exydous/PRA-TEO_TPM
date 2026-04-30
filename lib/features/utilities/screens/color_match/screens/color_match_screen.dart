@@ -145,7 +145,7 @@ class ColorMatchScreen extends StatelessWidget {
             const SizedBox(height: 16),
             TextButton(
               onPressed: () {
-                controller.fetchLeaderboard(); // Ambil data segar sebelum buka
+                controller.fetchLeaderboard(); 
                 controller.currentState.value = GameState.leaderboard;
               },
               child: const Text("VIEW LEADERBOARD", style: TextStyle(color: Colors.white60)),
@@ -176,7 +176,6 @@ class ColorMatchScreen extends StatelessWidget {
                 itemCount: controller.globalLeaderboard.length,
                 itemBuilder: (context, index) {
                   final data = controller.globalLeaderboard[index];
-                  // Warna Mahkota untuk Top 3
                   Color rankColor = index == 0 ? Colors.amber : (index == 1 ? Colors.grey : (index == 2 ? Colors.brown : Colors.white24));
                   
                   return Container(
@@ -237,7 +236,7 @@ class ColorMatchScreen extends StatelessWidget {
     );
   }
 
-  // --- LAYAR 4: MENEBAK WARNA (PERBAIKAN POSISI UI) ---
+  // --- LAYAR 4: MENEBAK WARNA ---
   Widget _buildGuess(ColorMatchController controller) {
     return Column(
       children: [
@@ -272,7 +271,6 @@ class ColorMatchScreen extends StatelessWidget {
           ),
         ),
         
-        // Panel Bawah dengan SafeArea
         Container(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 8), 
           decoration: const BoxDecoration(
@@ -353,32 +351,86 @@ class ColorMatchScreen extends StatelessWidget {
     );
   }
 
-  // --- LAYAR 6: SKOR FINAL ---
+  // --- LAYAR 6: SKOR FINAL DENGAN HADIAH PRESET ---
   Widget _buildFinalScore(ColorMatchController controller) {
     double finalAvg = controller.totalScore.value / 4;
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.stars_rounded, size: 100, color: Colors.amber),
-            const SizedBox(height: 24),
-            Text(controller.gameUsername.value, style: const TextStyle(color: Color(0xFF4FC3F7), fontSize: 22, fontWeight: FontWeight.bold)),
-            const Text("GAME COMPLETE!", style: TextStyle(color: Colors.white54, fontSize: 14, letterSpacing: 2)),
-            const SizedBox(height: 30),
-            Text("${finalAvg.toStringAsFixed(1)}%", style: const TextStyle(color: Colors.white, fontSize: 64, fontWeight: FontWeight.bold)),
-            const Text("AVERAGE ACCURACY", style: TextStyle(color: Colors.white24, letterSpacing: 2)),
-            const SizedBox(height: 60),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.white10, padding: const EdgeInsets.all(16)),
-                onPressed: controller.backToMenu, 
-                child: const Text("BACK TO MENU")
+      child: SingleChildScrollView( // Ditambahkan agar tidak error jika layar kecil
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.stars_rounded, size: 100, color: Colors.amber),
+              const SizedBox(height: 24),
+              Text(controller.gameUsername.value, style: const TextStyle(color: Color(0xFF4FC3F7), fontSize: 22, fontWeight: FontWeight.bold)),
+              const Text("GAME COMPLETE!", style: TextStyle(color: Colors.white54, fontSize: 14, letterSpacing: 2)),
+              const SizedBox(height: 30),
+              Text("${finalAvg.toStringAsFixed(1)}%", style: const TextStyle(color: Colors.white, fontSize: 64, fontWeight: FontWeight.bold)),
+              const Text("AVERAGE ACCURACY", style: TextStyle(color: Colors.white24, letterSpacing: 2)),
+              
+              // --- [BARU] WIDGET HADIAH PRESET ---
+              Obx(() {
+                if (controller.isWonReward.value && controller.wonPresetDetails.isNotEmpty) {
+                  final preset = controller.wonPresetDetails;
+                  return Column(
+                    children: [
+                      const SizedBox(height: 24),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.green.shade700, width: 2),
+                        ),
+                        child: Column(
+                          children: [
+                            const Text(
+                              "🎉 BONUS PRESET 1 JAM! 🎉", 
+                              style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 16)
+                            ),
+                            const SizedBox(height: 12),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                preset['thumbnail_url'] ?? '',
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => 
+                                    const Icon(Icons.broken_image, color: Colors.white54, size: 40),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              preset['name'] ?? 'Premium Preset', 
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              "Cek Profilmu sekarang!", 
+                              style: TextStyle(color: Colors.white70, fontSize: 12)
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return const SizedBox.shrink(); // Jika kalah, bagian ini hilang
+              }),
+
+              const SizedBox(height: 40),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white10, padding: const EdgeInsets.all(16)),
+                  onPressed: controller.backToMenu, 
+                  child: const Text("BACK TO MENU")
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

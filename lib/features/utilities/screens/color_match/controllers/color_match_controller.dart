@@ -2,14 +2,15 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hive_flutter/hive_flutter.dart'; // [BARU] Import Hive
+import 'package:hive_flutter/hive_flutter.dart'; 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tugas_akhir/features/editor/controllers/editor_controller.dart';
+import 'package:tugas_akhir/services/notification_service.dart'; // [PASTIKAN IMPORT INI ADA]
 
 enum GameState { menu, leaderboard, memorize, guess, result, finalScore }
 
 class ColorMatchController extends GetxController {
   final supabase = Supabase.instance.client;
-  // [BARU] Panggil Kotak Rahasia Hive
   final Box authBox = Hive.box('authBox');
   
   var currentState = GameState.menu.obs;
@@ -20,6 +21,10 @@ class ColorMatchController extends GetxController {
   // --- CLOUD LEADERBOARD DATA ---
   var globalLeaderboard = <Map<String, dynamic>>[].obs;
   var isLoadingLeaderboard = false.obs;
+
+  // --- [BARU] VARIABEL HADIAH UNTUK TAMPILAN UI ---
+  var isWonReward = false.obs;
+  var wonPresetDetails = <String, dynamic>{}.obs;
 
   // Variabel Game
   var round = 1.obs;
@@ -47,7 +52,6 @@ class ColorMatchController extends GetxController {
 
   // --- LOGIKA CLOUD (SUPABASE) ---
 
-  // [DIUBAH] Ambil nama dari Hive, bukan Supabase Auth
   void _loadDefaultUsername() {
     String currentEmail = authBox.get('currentUser', defaultValue: '');
     if (currentEmail.isNotEmpty) {
@@ -60,7 +64,6 @@ class ColorMatchController extends GetxController {
     }
   }
 
-  // Ambil TOP 10 dari Tabel 'color_match_scores'
   Future<void> fetchLeaderboard() async {
     try {
       isLoadingLeaderboard.value = true;
@@ -78,27 +81,92 @@ class ColorMatchController extends GetxController {
     }
   }
 
-  // [DIUBAH] Kirim Skor Akhir ke Supabase Menggunakan Email Hive
+  // --- [DIPERBARUI] FUNGSI KLAIM HADIAH PRESET (DENGAN NOTIFIKASI) ---
+  Future<void> claimRewardPreset() async {
+    String currentEmail = authBox.get('currentUser', defaultValue: '');
+    if (currentEmail.isEmpty) return;
+
+    String rewardPresetId = '408ba7ee-2ced-49fb-8f3a-7026289ba543'; 
+    // Capt bisa ubah Duration sesuai keinginan (minutes: 1 untuk tes, hours: 1 untuk real)
+    DateTime expiryTime = DateTime.now().toUtc().add(const Duration(minutes: 1));
+
+    try {
+      // 1. Masukkan ke tabel user_presets
+      await supabase.from('user_presets').insert({
+        'user_id': currentEmail,
+        'preset_id': rewardPresetId,
+        'expires_at': expiryTime.toIso8601String(),
+      });
+      
+      // 2. Ambil detail preset
+      final presetData = await supabase
+          .from('presets')
+          .select()
+          .eq('id', rewardPresetId)
+          .single();
+          
+      wonPresetDetails.value = presetData;
+      isWonReward.value = true;
+
+      // 3. REFRESH DATA EDITOR
+      if (Get.isRegistered<EditorController>()) {
+        Get.find<EditorController>().loadOwnedPresets();
+      }
+
+      // 4. [BARU] PASANG PELATUK NOTIFIKASI KADALUARSA
+      try {
+        await NotificationService.scheduleNotification(
+          id: rewardPresetId.hashCode, // Gunakan ID preset agar unik
+          title: '⏳ Waktu Preset Habis!',
+          body: 'Masa uji coba preset "${presetData['name'] ?? 'Premium'}" sudah berakhir.',
+          scheduledTime: expiryTime,
+        );
+        debugPrint("✅ Notifikasi kadaluarsa dijadwalkan pada: $expiryTime");
+      } catch (nodeErr) {
+        debugPrint("❌ Gagal menjadwalkan notifikasi: $nodeErr");
+      }
+
+      // 5. Snackbar UI
+      Future.delayed(const Duration(milliseconds: 500), () {
+        Get.snackbar(
+          '🎉 LUAR BIASA!', 
+          'Kamu mendapat Preset "${presetData['name'] ?? 'Premium'}" Gratis!', 
+          backgroundColor: Colors.green.shade800, 
+          colorText: Colors.white,
+          duration: const Duration(seconds: 5),
+          snackPosition: SnackPosition.TOP,
+        );
+      });
+    } catch (e) {
+      debugPrint("Gagal mengklaim hadiah preset: $e");
+    }
+  }
+
+  // --- KIRIM SKOR & CEK HADIAH ---
   Future<void> submitFinalScoreToCloud() async {
     String currentEmail = authBox.get('currentUser', defaultValue: '');
-    if (currentEmail.isEmpty) return; // Batal jika bermain sebagai anonim murni
+    if (currentEmail.isEmpty) return; 
 
     double finalAvg = totalScore.value / 4;
 
     try {
       await supabase.from('color_match_scores').insert({
-        'user_id': currentEmail, // Kirim email lokal sebagai ID
+        'user_id': currentEmail, 
         'username': gameUsername.value,
         'accuracy_score': finalAvg,
       });
-      fetchLeaderboard(); // Refresh data setelah berhasil simpan
+      fetchLeaderboard(); 
+
+      if (finalAvg > 85.0) {
+        await claimRewardPreset();
+      }
+
     } catch (e) {
       debugPrint("Gagal kirim skor: $e");
     }
   }
 
   // --- LOGIKA GAME ---
-
   void updateGameUsername(String newName) {
     if (newName.trim().isNotEmpty) {
       gameUsername.value = newName.trim();
@@ -108,6 +176,8 @@ class ColorMatchController extends GetxController {
   void startSoloGame() {
     round.value = 1;
     totalScore.value = 0.0;
+    isWonReward.value = false;
+    wonPresetDetails.clear();
     _generateNewTarget();
     _startMemorizePhase();
   }
@@ -117,7 +187,6 @@ class ColorMatchController extends GetxController {
     targetHue.value = random.nextDouble() * 360;
     targetSat.value = (random.nextDouble() * 60) + 40; 
     targetLight.value = (random.nextDouble() * 60) + 20; 
-    
     userHue.value = 180.0;
     userSat.value = 50.0;
     userLight.value = 50.0;
@@ -126,7 +195,6 @@ class ColorMatchController extends GetxController {
   void _startMemorizePhase() {
     currentState.value = GameState.memorize;
     countdown.value = 5;
-    
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (countdown.value > 1) {
@@ -142,11 +210,9 @@ class ColorMatchController extends GetxController {
     double diffH = (targetHue.value - userHue.value).abs() / 360;
     double diffS = (targetSat.value - userSat.value).abs() / 100;
     double diffL = (targetLight.value - userLight.value).abs() / 100;
-    
     double avgDiff = (diffH + diffS + diffL) / 3;
     lastAccuracy.value = (1.0 - avgDiff) * 100;
     totalScore.value += lastAccuracy.value;
-    
     currentState.value = GameState.result;
   }
 
@@ -157,7 +223,7 @@ class ColorMatchController extends GetxController {
       _startMemorizePhase();
     } else {
       currentState.value = GameState.finalScore;
-      submitFinalScoreToCloud(); // OTOMATIS SIMPAN KE CLOUD SAAT GAME SELESAI
+      submitFinalScoreToCloud(); 
     }
   }
 

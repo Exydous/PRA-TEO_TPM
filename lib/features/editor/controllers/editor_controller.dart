@@ -37,6 +37,7 @@ class EditorController extends GetxController {
   final Box authBox = Hive.box('authBox');
   
   Rx<File?> selectedImage = Rx<File?>(null);
+  Rx<File?> originalImage = Rx<File?>(null); // Memori gambar asli untuk reset crop
   var currentDraftId = ''.obs; 
   var oldImageUrl = ''.obs; 
   
@@ -60,6 +61,9 @@ class EditorController extends GetxController {
 
   var ownedPresets = <Map<String, dynamic>>[].obs;
   var isPresetsLoading = false.obs;
+  
+  var activePresetName = ''.obs; // [BARU] Mengingat nama preset yang aktif
+  
 
   final ImagePicker _picker = ImagePicker();
   final GlobalKey exportKey = GlobalKey();
@@ -79,32 +83,45 @@ class EditorController extends GetxController {
     super.onClose();
   }
 
-  // --- [DIUBAH] MENARIK PRESET DARI SUPABASE SESUAI STRUKTUR BARU ---
-  // --- [DIUBAH] MEMUAT KOLEKSI DARI TABEL ASLI ANDA ---
+  // --- [DIPERBAIKI] MEMUAT KOLEKSI & MENYUNTIKKAN EXPIRES_AT ---
   Future<void> loadOwnedPresets() async {
-    // 1. Ambil email user dari Hive
     String currentEmail = authBox.get('currentUser', defaultValue: '');
     if (currentEmail.isEmpty) return;
 
     try {
       isPresetsLoading.value = true;
       
-      // 2. Tarik data dari user_presets. 
-      // Karena Anda menyimpan relasi, kita tarik kolom 'presets(*)' 
-      // agar detail preset (exposure, name, thumbnail) ikut terbawa.
       final response = await supabase
           .from('user_presets')
-          .select('presets (*)') 
+          .select('expires_at, presets (*)') 
           .eq('user_id', currentEmail);
           
-        // 3. Masukkan data ke list ownedPresets. 
-        // Kita ambil isi dari object 'presets' yang ada di dalam list response.
-        ownedPresets.value = response
-            .where((e) => e['presets'] != null)
-            .map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e['presets']))
-            .toList();
-            
-        debugPrint("✅ Berhasil memuat ${ownedPresets.length} preset dari Supabase untuk $currentEmail");
+      List<Map<String, dynamic>> validPresets = [];
+
+      for (var row in response) {
+        if (row['presets'] != null) {
+          // Ambil data preset aslinya
+          var presetData = Map<String, dynamic>.from(row['presets']);
+          
+          // [KUNCI PERBAIKAN]: SUNTIKKAN expires_at KE DALAM MAP AGAR UI BISA MEMBACANYA
+          presetData['expires_at'] = row['expires_at'];
+
+          // Cek apakah preset ini punya batas waktu (hadiah)
+          if (row['expires_at'] != null) {
+            DateTime expiryDate = DateTime.parse(row['expires_at']).toLocal();
+            // Jika masih aktif, masukkan ke list
+            if (DateTime.now().isBefore(expiryDate)) {
+              validPresets.add(presetData);
+            } 
+          } else {
+            // Preset permanen (beli)
+            validPresets.add(presetData);
+          }
+        }
+      }
+
+      ownedPresets.value = validPresets;
+      debugPrint("✅ Berhasil memuat ${ownedPresets.length} preset aktif dari Supabase");
       
     } catch (e) {
       debugPrint("❌ Gagal memuat koleksi preset: $e");
@@ -115,6 +132,7 @@ class EditorController extends GetxController {
 
   void applyPreset(Map<String, dynamic> preset) {
     String name = preset['name'] ?? 'Preset';
+    activePresetName.value = name;
     exposure.value = (preset['exposure'] as num?)?.toDouble() ?? 0.0;
     contrast.value = (preset['contrast'] as num?)?.toDouble() ?? 0.0;
     temperature.value = (preset['temperature'] as num?)?.toDouble() ?? 0.0;
@@ -124,14 +142,7 @@ class EditorController extends GetxController {
     
     saveState(); 
     
-    Get.snackbar(
-      '✨Preset Applied', 
-      'Menerapkan gaya $name', 
-      snackPosition: SnackPosition.TOP, 
-      backgroundColor: Colors.black87, 
-      colorText: Colors.white, 
-      duration: const Duration(seconds: 2)
-    );
+    Get.snackbar('✨ Preset Applied', 'Menerapkan gaya $name', snackPosition: SnackPosition.TOP, backgroundColor: Colors.black87, colorText: Colors.white, duration: const Duration(seconds: 2));
   }
 
   void _initLightSensor() {
@@ -154,8 +165,12 @@ class EditorController extends GetxController {
   void _onShakeDetected() => resetEffects(fromSensor: true);
 
   void resetEffects({bool fromSensor = false}) {
+    activePresetName.value = '';
     exposure.value = 0.0; contrast.value = 0.0; temperature.value = 0.0;
     saturation.value = 0.0; tint.value = 0.0; isBlackAndWhite.value = false;
+    if (originalImage.value != null) {
+      selectedImage.value = originalImage.value;
+    }
     saveState(); 
     String msg = fromSensor ? 'Guncangan terdeteksi! Efek direset.' : 'Efek berhasil direset.';
     Get.snackbar('Reset', msg, duration: const Duration(seconds: 2), snackPosition: SnackPosition.TOP, backgroundColor: Colors.black87, colorText: Colors.white);
@@ -189,8 +204,40 @@ class EditorController extends GetxController {
   Future<void> openCropTool() async {
     if (selectedImage.value == null) return;
     try {
-      CroppedFile? croppedFile = await ImageCropper().cropImage(sourcePath: selectedImage.value!.path);
-      if (croppedFile != null) selectedImage.value = File(croppedFile.path);
+      CroppedFile? croppedFile = await ImageCropper().cropImage(
+        sourcePath: selectedImage.value!.path,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop & Rotate',
+            toolbarColor: const Color(0xFF0A0B0F),
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false, 
+            hideBottomControls: false,
+            aspectRatioPresets: [
+              CropAspectRatioPreset.original,
+              CropAspectRatioPreset.square,
+              CropAspectRatioPreset.ratio3x2,
+              CropAspectRatioPreset.ratio4x3,
+              CropAspectRatioPreset.ratio16x9
+            ],
+          ),
+          IOSUiSettings(
+            title: 'Crop & Rotate',
+            aspectRatioLockEnabled: false, 
+            aspectRatioPresets: [
+              CropAspectRatioPreset.original,
+              CropAspectRatioPreset.square,
+              CropAspectRatioPreset.ratio3x2,
+              CropAspectRatioPreset.ratio4x3,
+              CropAspectRatioPreset.ratio16x9
+            ],
+          ),
+        ],
+      );
+      if (croppedFile != null) {
+        selectedImage.value = File(croppedFile.path);
+      }
     } catch (e) {
       Get.snackbar('Error', 'Gagal memotong gambar: $e');
     }
@@ -201,6 +248,7 @@ class EditorController extends GetxController {
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       if (image != null) {
         selectedImage.value = File(image.path);
+        originalImage.value = File(image.path); // Simpan foto asli
         currentDraftId.value = ''; 
         oldImageUrl.value = '';
         resetAllSettings(); 
@@ -279,6 +327,7 @@ class EditorController extends GetxController {
       await saveToCloud(finalName);
       resetAllSettings();
       selectedImage.value = null;
+      originalImage.value = null; 
       currentDraftId.value = '';
 
       if (Get.isRegistered<DraftController>()) Get.find<DraftController>().loadDrafts();
@@ -307,7 +356,7 @@ class EditorController extends GetxController {
           decoration: const InputDecoration(hintText: 'Draft Name', hintStyle: TextStyle(color: Colors.white38), filled: true, fillColor: Colors.black),
         ),
         actions: [
-          TextButton(onPressed: () { Get.back(); resetAllSettings(); selectedImage.value = null; Get.back(); }, child: const Text('Delete', style: TextStyle(color: Colors.redAccent))),
+          TextButton(onPressed: () { Get.back(); resetAllSettings(); selectedImage.value = null; originalImage.value = null; Get.back(); }, child: const Text('Delete', style: TextStyle(color: Colors.redAccent))),
           ElevatedButton(onPressed: () { _processSavingDraft(nameController.text.trim()); }, child: const Text('Save')),
         ],
       )
@@ -315,9 +364,15 @@ class EditorController extends GetxController {
   }
 
   void resetAllSettings() {
+    activePresetName.value = '';
     currentMode.value = EditorMode.edit; currentSubMenu.value = EditSubMenu.light;
     exposure.value = 0.0; contrast.value = 0.0; temperature.value = 0.0;
     saturation.value = 0.0; tint.value = 0.0; isBlackAndWhite.value = false;
+    
+    if (originalImage.value != null) {
+      selectedImage.value = originalImage.value;
+    }
+
     history.clear(); saveState(); 
   }
 
@@ -346,6 +401,7 @@ class EditorController extends GetxController {
       await tempFile.writeAsBytes(fileBytes);
 
       selectedImage.value = tempFile;
+      originalImage.value = tempFile; 
       currentDraftId.value = data['id']; 
       oldImageUrl.value = data['image_url'];
 

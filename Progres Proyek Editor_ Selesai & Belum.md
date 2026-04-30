@@ -73,8 +73,6 @@
 
 - User dapat mengunggah profile picture
 
-🚧 Fitur yang Belum Dibuat (Misi Final)
+12. Notifikasi
 
-1. Notifikasi
-
-- Daily reminder atau balasan forum feedback
+- Konfirmasi pembelian

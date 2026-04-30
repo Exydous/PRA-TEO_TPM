@@ -99,15 +99,15 @@ class PaymentController extends GetxController {
     Get.back();
 
     // 4. MUNCULKAN NOTIFIKASI SUKSES
-    Future.delayed(const Duration(milliseconds: 300), () {
-      Get.snackbar(
-        'Pembayaran Berhasil 🎉',
-        'Preset ${preset['name'] ?? ''} ditambahkan ke koleksimu!',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: const Color(0xFF1E3A8A),
-        colorText: Colors.white,
-      );
-    });
+    // Future.delayed(const Duration(milliseconds: 300), () {
+    //   Get.snackbar(
+    //     'Pembayaran Berhasil 🎉',
+    //     'Preset ${preset['name'] ?? ''} ditambahkan ke koleksimu!',
+    //     snackPosition: SnackPosition.TOP,
+    //     backgroundColor: const Color(0xFF1E3A8A),
+    //     colorText: Colors.white,
+    //   );
+    // });
 
     NotificationService.showNotification(
       id: preset['id']?.hashCode ?? 1, 
