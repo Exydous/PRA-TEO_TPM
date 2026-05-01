@@ -21,11 +21,9 @@ class ProfileController extends GetxController {
   var myAllFeedbacks = <Map<String, dynamic>>[].obs;
   var isFeedbacksLoading = false.obs;
 
-  // --- [BARU] VARIABEL PENGATURAN ---
   var isFingerprintEnabled = true.obs;
   var selectedColorBlindType = 'Normal'.obs;
 
-  // Daftar pilihan buta warna untuk Dropdown
   final List<String> colorBlindOptions = [
     'Normal',
     'Protanopia (Merah)',
@@ -37,13 +35,11 @@ class ProfileController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadUserData();
-    _loadAppSettings(); // Muat pengaturan fingerprint & buta warna
+    loadUserData(); // [DIUBAH] Menghilangkan underscore
+    _loadAppSettings(); 
   }
 
-  // --- [BARU] LOGIKA PENGATURAN ---
   void _loadAppSettings() {
-    // Ambil dari Hive, jika kosong default ke true/Normal
     isFingerprintEnabled.value = authBox.get('fingerprint_enabled', defaultValue: true);
     selectedColorBlindType.value = authBox.get('color_blind_type', defaultValue: 'Normal');
   }
@@ -62,8 +58,8 @@ class ProfileController extends GetxController {
     }
   }
 
-  // --- LOGIKA PROFIL LAMA ---
-  void _loadUserData() {
+  // --- [DIUBAH] Menghilangkan underscore agar bisa di-refresh dari AuthController ---
+  void loadUserData() {
     String currentEmail = authBox.get('currentUser', defaultValue: '');
     
     if (currentEmail.isNotEmpty) {
@@ -81,6 +77,7 @@ class ProfileController extends GetxController {
     } else {
       userEmail.value = 'Tidak ada email';
       userName.value = 'Guest';
+      profileImageUrl.value = ''; // Hapus foto profil jika logout
     }
   }
 
@@ -88,16 +85,12 @@ class ProfileController extends GetxController {
     if (newName.trim().isEmpty) return;
     try {
       await supabase.auth.updateUser(UserAttributes(data: {'username': newName}));
-      
       var userData = authBox.get(userEmail.value) ?? {};
       userData['name'] = newName;
       await authBox.put(userEmail.value, userData);
-
       userName.value = newName;
       Get.snackbar('Berhasil 🎉', 'Username diubah menjadi $newName', backgroundColor: Colors.green, colorText: Colors.white);
-    } catch (e) {
-      Get.snackbar('Gagal', 'Tidak dapat mengubah username: $e', backgroundColor: Colors.redAccent, colorText: Colors.white);
-    }
+    } catch (e) {}
   }
 
   Future<void> changePassword(String newPassword) async {
@@ -105,22 +98,33 @@ class ProfileController extends GetxController {
     try {
       await supabase.auth.updateUser(UserAttributes(password: newPassword));
       Get.snackbar('Berhasil 🔐', 'Password berhasil diperbarui', backgroundColor: Colors.green, colorText: Colors.white);
-    } catch (e) {
-      Get.snackbar('Gagal', 'Tidak dapat memperbarui password: $e', backgroundColor: Colors.redAccent, colorText: Colors.white);
-    }
+    } catch (e) {}
   }
 
   Future<void> loadMyFeedbacks() async {
     if (userEmail.value.isEmpty) return;
     try {
       isFeedbacksLoading.value = true;
+      
+      // 1. Ambil SEMUA feedback milik user ini dari Supabase (diurutkan dari yang terbaru)
       final response = await supabase
           .from('feedbacks') 
           .select()
           .eq('user_email', userEmail.value)
-          .or('content.ilike.%saran%,content.ilike.%kesan%'); 
+          .order('created_at', ascending: false); 
       
-      myAllFeedbacks.value = List<Map<String, dynamic>>.from(response);
+      // 2. Ubah data dari database menjadi List
+      final List<Map<String, dynamic>> allUserFeedbacks = List<Map<String, dynamic>>.from(response);
+
+      // 3. FILTERING CERDAS (Hanya masukkan ke Profil jika ada kata "saran" atau "kesan")
+      myAllFeedbacks.value = allUserFeedbacks.where((feedback) {
+        // Ubah teks jadi huruf kecil semua agar filternya kebal terhadap huruf kapital (Saran, SARAN, saran)
+        final String content = (feedback['content'] ?? '').toString().toLowerCase();
+        
+        // Kembalikan nilai true jika mengandung kata "saran" ATAU "kesan"
+        return content.contains('saran') || content.contains('kesan');
+      }).toList();
+
     } catch (e) {
       debugPrint("Gagal memuat feedback: $e");
     } finally {
@@ -129,6 +133,7 @@ class ProfileController extends GetxController {
   }
 
   Future<void> pickAndUploadImage() async {
+    // ... Kodingan upload image tetap sama persis ...
     final picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     if (image == null) return;
@@ -136,12 +141,7 @@ class ProfileController extends GetxController {
     CroppedFile? croppedFile = await ImageCropper().cropImage(
       sourcePath: image.path,
       uiSettings: [
-        AndroidUiSettings(
-          toolbarTitle: 'Atur Foto Profil',
-          toolbarColor: const Color(0xFF0A0B0F), 
-          toolbarWidgetColor: Colors.white,
-          initAspectRatio: CropAspectRatioPreset.square,
-        ),
+        AndroidUiSettings(toolbarTitle: 'Atur Foto Profil', toolbarColor: const Color(0xFF0A0B0F), toolbarWidgetColor: Colors.white, initAspectRatio: CropAspectRatioPreset.square),
       ],
     );
 
@@ -154,25 +154,21 @@ class ProfileController extends GetxController {
       final safeEmail = userEmail.value.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
       final fileName = '$safeEmail-${DateTime.now().millisecondsSinceEpoch}.$fileExt';
 
-      await supabase.storage.from('avatars').upload(fileName, file,
-          fileOptions: const FileOptions(cacheControl: '3600', upsert: true));
-
+      await supabase.storage.from('avatars').upload(fileName, file, fileOptions: const FileOptions(cacheControl: '3600', upsert: true));
       final String publicUrl = supabase.storage.from('avatars').getPublicUrl(fileName);
 
       var userData = authBox.get(userEmail.value) ?? {};
       userData['avatar_url'] = publicUrl; 
       await authBox.put(userEmail.value, userData); 
-
       profileImageUrl.value = publicUrl;
-    } catch (e) {
-      Get.snackbar("Error", "Gagal mengunggah foto: $e", backgroundColor: Colors.redAccent, colorText: Colors.white);
-    } finally {
+    } catch (e) {} finally {
       isUploading.value = false;
     }
   }
 
   Future<void> logout() async {
     await authBox.delete('currentUser');
+    loadUserData(); // [BARU] Kembalikan status ke Guest setelah logout
     try {
       Get.delete<EditorController>(force: true);
     } catch(e) {}

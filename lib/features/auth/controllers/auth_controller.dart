@@ -3,17 +3,17 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:local_auth/local_auth.dart'; // [BARU] Import Biometrik
+import 'package:local_auth/local_auth.dart';
 import '../../../core/routes/app_routes.dart';
+// [BARU] Import ProfileController untuk memerintahkan Refresh Data
+import '../../profiles/controllers/profile_controller.dart'; 
 
 class AuthController extends GetxController {
   final Box authBox = Hive.box('authBox'); 
-  final LocalAuthentication localAuth = LocalAuthentication(); // [BARU] Inisialisasi Biometrik
+  final LocalAuthentication localAuth = LocalAuthentication(); 
   
   var isLoading = false.obs;
   var isLoginMode = true.obs;
-
-  // [BARU] Status Biometrik
   var isBiometricSupported = false.obs;
   var hasSavedUser = false.obs;
 
@@ -27,16 +27,21 @@ class AuthController extends GetxController {
     super.onInit();
     intipIsiHive(); 
     _checkExistingSession();
-    _checkBiometricAndUser(); // [BARU] Cek kesiapan sensor saat start
+    _checkBiometricAndUser(); 
   }
 
-  // --- [BARU] Fungsi Inisialisasi Biometrik ---
   Future<void> _checkBiometricAndUser() async {
-    // Cek apakah ada email terakhir yang tersimpan di Hive
+    // --- [PERBAIKAN SAKLAR FINGERPRINT] ---
+    // Cek apakah user mematikan fitur biometrik di profil
+    bool isFingerprintEnabled = authBox.get('fingerprint_enabled', defaultValue: true);
+    if (!isFingerprintEnabled) {
+      isBiometricSupported.value = false; 
+      return; // Langsung keluar, tombol biometrik di halaman login tidak akan muncul
+    }
+
     String lastEmail = authBox.get('lastEmail', defaultValue: '');
     hasSavedUser.value = lastEmail.isNotEmpty;
 
-    // Cek apakah HP ini mendukung sidik jari/Face ID
     try {
       bool canCheckBiometrics = await localAuth.canCheckBiometrics;
       bool isSupported = await localAuth.isDeviceSupported();
@@ -46,35 +51,31 @@ class AuthController extends GetxController {
     }
   }
 
-  // --- [BARU] Logika Login Jalur Pintas (Biometrik) ---
   Future<void> loginWithBiometric() async {
-    // 1. Cek dulu siapa email terakhir yang login di HP ini
     String lastEmail = authBox.get('lastEmail', defaultValue: '');
 
     if (lastEmail.isEmpty) {
-      Get.snackbar('Info', 'Silakan login manual dulu sekali agar sidik jari bisa didaftarkan.', 
-          backgroundColor: Colors.blueGrey);
+      Get.snackbar('Info', 'Silakan login manual dulu sekali.', backgroundColor: Colors.blueGrey);
       return;
     }
 
     try {
-      // 2. Munculkan Pop-up Sidik Jari/Face ID
       bool didAuthenticate = await localAuth.authenticate(
         localizedReason: 'Gunakan sidik jari untuk masuk ke aplikasi',
-        biometricOnly: true, // Paksa pakai biometrik, bukan PIN angka HP
+        biometricOnly: true, // Diupdate agar tidak ada warning error
       );
 
       if (didAuthenticate) {
-        // 3. Jika jari cocok, buat sesi aktif baru untuk email terakhir
         await authBox.put('currentUser', lastEmail);
 
+        // --- [PERBAIKAN PROFIL GUEST] ---
+        // Suruh ProfileController muat ulang data sesuai akun yang baru login
+        if (Get.isRegistered<ProfileController>()) {
+          Get.find<ProfileController>().loadUserData();
+        }
+
         Get.offAllNamed(AppRoutes.MAIN);
-        Get.snackbar(
-          'Selamat Datang Kembali', 
-          'Login Biometrik Berhasil!',
-          backgroundColor: Colors.blueGrey.shade900, 
-          colorText: Colors.white,
-        );
+        Get.snackbar('Selamat Datang Kembali', 'Login Biometrik Berhasil!', backgroundColor: Colors.blueGrey.shade900, colorText: Colors.white);
       }
     } catch (e) {
       Get.snackbar('Error', 'Autentikasi biometrik gagal: $e');
@@ -114,7 +115,6 @@ class AuthController extends GetxController {
     if (isLoginMode.value) {
       await loginUser(email, rawPassword);
     } else {
-      // (Logika registrasi tetap sama seperti kodinganmu sebelumnya)
       await registerUser(name, email, rawPassword);
     }
   }
@@ -126,18 +126,11 @@ class AuthController extends GetxController {
         Get.snackbar('❌ Gagal', 'Email sudah terdaftar.', backgroundColor: Colors.red.shade900, colorText: Colors.white);
         return;
       }
-
       String securedPassword = hashPassword(rawPassword);
-
-      await authBox.put(email, {
-        'name': name,
-        'password': securedPassword,
-      });
-
+      await authBox.put(email, {'name': name, 'password': securedPassword});
       isLoginMode.value = true;
       Get.snackbar('✅ Berhasil', 'Akun telah dibuat.', backgroundColor: Colors.green.shade800, colorText: Colors.white);
     } catch (e) {
-      Get.snackbar('❌ Gagal', 'Kesalahan: $e');
     } finally {
       isLoading.value = false;
     }
@@ -156,16 +149,19 @@ class AuthController extends GetxController {
       String securedPassword = hashPassword(rawPassword);
 
       if (userData['password'] == securedPassword) {
-        // [PENTING] Simpan sesi aktif DAN simpan email sebagai "Pengguna Terakhir"
         await authBox.put('currentUser', email);
-        await authBox.put('lastEmail', email); // [BARU] Untuk pemicu biometrik nanti
+        await authBox.put('lastEmail', email); 
+
+        // --- [PERBAIKAN PROFIL GUEST] ---
+        if (Get.isRegistered<ProfileController>()) {
+          Get.find<ProfileController>().loadUserData();
+        }
 
         Get.offAllNamed(AppRoutes.MAIN);
       } else {
         Get.snackbar('❌ Login Gagal', 'Email/Password salah.', backgroundColor: Colors.red.shade900, colorText: Colors.white);
       }
     } catch (e) {
-      Get.snackbar('❌ Error', 'Kesalahan sistem.');
     } finally {
       isLoading.value = false;
     }
@@ -173,6 +169,12 @@ class AuthController extends GetxController {
 
   Future<void> logoutUser() async {
     await authBox.delete('currentUser');
+    
+    // Kembalikan ke Guest
+    if (Get.isRegistered<ProfileController>()) {
+      Get.find<ProfileController>().loadUserData();
+    }
+    
     Get.offAllNamed(AppRoutes.LOGIN);
   }
 

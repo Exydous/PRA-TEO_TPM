@@ -88,7 +88,7 @@ class ColorMatchController extends GetxController {
 
     String rewardPresetId = '408ba7ee-2ced-49fb-8f3a-7026289ba543'; 
     // Capt bisa ubah Duration sesuai keinginan (minutes: 1 untuk tes, hours: 1 untuk real)
-    DateTime expiryTime = DateTime.now().toUtc().add(const Duration(minutes: 1));
+    DateTime expiryTime = DateTime.now().toUtc().add(const Duration(minutes: 1)); // [TESTING] 1 menit untuk cepat lihat hasil, ganti ke Duration(hours: 1) untuk produksi
 
     try {
       // 1. Masukkan ke tabel user_presets

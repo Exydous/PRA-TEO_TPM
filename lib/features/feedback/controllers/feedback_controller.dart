@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+// [PENTING] Tambahkan import ProfileController sesuai dengan letak folder Capt.
+// Sesuaikan path ini jika ada error garis merah.
+import '../../profiles/controllers/profile_controller.dart'; 
 
 class FeedbackController extends GetxController {
   final supabase = Supabase.instance.client;
@@ -53,9 +56,18 @@ class FeedbackController extends GetxController {
         'user_name': userName,
         'content': content,
       });
+      
       Get.back(); // Tutup loading
       Get.back(); // Tutup bottom sheet
-      fetchFeedbacks(); // Refresh daftar
+      
+      fetchFeedbacks(); // Refresh daftar komunitas
+      
+      // --- [BARU] PELATUK REFRESH PROFIL ---
+      // Jika controller profil sedang aktif, suruh dia ambil data baru dari Supabase
+      if (Get.isRegistered<ProfileController>()) {
+        Get.find<ProfileController>().loadMyFeedbacks();
+      }
+
       Get.snackbar('Berhasil', 'Pesanmu telah dikirim ke komunitas!', backgroundColor: Colors.green.shade800, colorText: Colors.white);
     } catch (e) {
       Get.back();

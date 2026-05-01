@@ -386,7 +386,7 @@ class ColorMatchScreen extends StatelessWidget {
                         child: Column(
                           children: [
                             const Text(
-                              "🎉 BONUS PRESET 1 JAM! 🎉", 
+                              "🎉 BONUS PRESET 1 Menit! 🎉", // edit waktu
                               style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 16)
                             ),
                             const SizedBox(height: 12),

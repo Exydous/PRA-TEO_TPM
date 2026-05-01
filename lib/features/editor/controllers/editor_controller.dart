@@ -63,7 +63,7 @@ class EditorController extends GetxController {
   var isPresetsLoading = false.obs;
   
   var activePresetName = ''.obs; // [BARU] Mengingat nama preset yang aktif
-  
+  Timer? _expiryTimer;
 
   final ImagePicker _picker = ImagePicker();
   final GlobalKey exportKey = GlobalKey();
@@ -74,13 +74,56 @@ class EditorController extends GetxController {
     ShakeGesture.registerCallback(onShake: _onShakeDetected);
     _initLightSensor(); 
     loadOwnedPresets(); 
+    _startExpiryMonitor();
   }
 
   @override
   void onClose() {
     ShakeGesture.unregisterCallback(onShake: _onShakeDetected);
     _lightSubscription?.cancel(); 
+    _expiryTimer?.cancel();
     super.onClose();
+  }
+
+  void _startExpiryMonitor() {
+    // Mengecek isi tas preset setiap 1 detik
+    _expiryTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (ownedPresets.isEmpty) return;
+
+      bool hasChanges = false;
+      List<Map<String, dynamic>> freshPresets = [];
+
+      for (var preset in ownedPresets) {
+        if (preset['expires_at'] != null) {
+          DateTime expiryDate = DateTime.parse(preset['expires_at']).toLocal();
+          
+          // Jika waktu sekarang sudah MELEWATI waktu kedaluwarsa
+          if (DateTime.now().isAfter(expiryDate)) {
+            hasChanges = true;
+            
+            // Fitur Ekstra: Jika preset yang habis sedang aktif dipakai, reset fotonya!
+            if (activePresetName.value == preset['name']) {
+              resetEffects();
+              Get.snackbar(
+                'Waktu Habis ⏱️', 
+                'Masa berlaku preset ${preset['name']} telah selesai.', 
+                backgroundColor: Colors.orange.shade900, 
+                colorText: Colors.white,
+                snackPosition: SnackPosition.TOP,
+              );
+            }
+            continue; // Skip (Jangan masukkan ke daftar yang baru)
+          }
+        }
+        // Jika belum kedaluwarsa, masukkan ke daftar aman
+        freshPresets.add(preset);
+      }
+
+      // Jika ada preset yang terhapus, perbarui UI seketika itu juga
+      if (hasChanges) {
+        ownedPresets.value = freshPresets;
+      }
+    });
   }
 
   // --- [DIPERBAIKI] MEMUAT KOLEKSI & MENYUNTIKKAN EXPIRES_AT ---
