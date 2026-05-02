@@ -7,6 +7,8 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; 
 import '../../../core/routes/app_routes.dart';
 import '../../editor/controllers/editor_controller.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 
 class ProfileController extends GetxController {
   final Box authBox = Hive.box('authBox'); 
@@ -81,24 +83,48 @@ class ProfileController extends GetxController {
     }
   }
 
+  // --- [BARU] ALAT ENKRIPSI PASSWORD ---
+  String _hashPassword(String password) {
+    var bytes = utf8.encode(password);
+    var digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
+  // --- PERBAIKAN: GANTI NAMA KE HIVE ---
   Future<void> changeUsername(String newName) async {
     if (newName.trim().isEmpty) return;
     try {
-      await supabase.auth.updateUser(UserAttributes(data: {'username': newName}));
+      // Ambil data user dari Hive
       var userData = authBox.get(userEmail.value) ?? {};
+      
+      // Ubah namanya dan simpan kembali ke Hive
       userData['name'] = newName;
       await authBox.put(userEmail.value, userData);
+      
+      // Update tampilan layar
       userName.value = newName;
-      Get.snackbar('Berhasil 🎉', 'Username diubah menjadi $newName', backgroundColor: Colors.green, colorText: Colors.white);
-    } catch (e) {}
+      
+      Get.snackbar('Berhasil 🎉', 'Username diubah menjadi $newName', backgroundColor: Colors.green.shade800, colorText: Colors.white);
+    } catch (e) {
+      Get.snackbar('Gagal', 'Terjadi kesalahan: $e', backgroundColor: Colors.red, colorText: Colors.white);
+    }
   }
 
+  // --- PERBAIKAN: GANTI PASSWORD KE HIVE ---
   Future<void> changePassword(String newPassword) async {
     if (newPassword.trim().isEmpty) return;
     try {
-      await supabase.auth.updateUser(UserAttributes(password: newPassword));
-      Get.snackbar('Berhasil 🔐', 'Password berhasil diperbarui', backgroundColor: Colors.green, colorText: Colors.white);
-    } catch (e) {}
+      // Ambil data user dari Hive
+      var userData = authBox.get(userEmail.value) ?? {};
+      
+      // Enkripsi password barunya, lalu simpan ke Hive
+      userData['password'] = _hashPassword(newPassword);
+      await authBox.put(userEmail.value, userData);
+      
+      Get.snackbar('Berhasil 🔐', 'Password berhasil diperbarui', backgroundColor: Colors.green.shade800, colorText: Colors.white);
+    } catch (e) {
+      Get.snackbar('Gagal', 'Terjadi kesalahan: $e', backgroundColor: Colors.red, colorText: Colors.white);
+    }
   }
 
   Future<void> loadMyFeedbacks() async {

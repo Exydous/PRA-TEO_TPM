@@ -5,6 +5,24 @@ import '../controllers/feedback_controller.dart';
 class FeedbackScreen extends StatelessWidget {
   const FeedbackScreen({super.key});
 
+  // --- WIDGET PEMBANTU UNTUK FOTO PROFIL ---
+  Widget _buildProfileAvatar(FeedbackController controller, Map<String, dynamic> post) {
+    String? photoUrl = controller.getUserPhoto(post['user_email']);
+    String initial = post['user_name']?[0].toUpperCase() ?? 'U';
+
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      return CircleAvatar(
+        backgroundColor: Colors.blueAccent,
+        backgroundImage: NetworkImage(photoUrl),
+      );
+    } else {
+      return CircleAvatar(
+        backgroundColor: Colors.blueAccent,
+        child: Text(initial, style: const TextStyle(color: Colors.white)),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final FeedbackController controller = Get.put(FeedbackController());
@@ -36,10 +54,10 @@ class FeedbackScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: ListTile(
                 contentPadding: const EdgeInsets.all(16),
-                leading: CircleAvatar(
-                  backgroundColor: Colors.blueAccent,
-                  child: Text(post['user_name']?[0].toUpperCase() ?? 'U', style: const TextStyle(color: Colors.white)),
-                ),
+                
+                // --- PANGGIL WIDGET FOTO DI SINI ---
+                leading: _buildProfileAvatar(controller, post),
+                
                 title: Text(post['user_name'] ?? 'Anonim', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
                 subtitle: Padding(
                   padding: const EdgeInsets.only(top: 8.0),
@@ -139,7 +157,8 @@ class FeedbackScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       Row(
                         children: [
-                          CircleAvatar(backgroundColor: Colors.blueAccent, child: Text(post['user_name']?[0].toUpperCase() ?? 'U', style: const TextStyle(color: Colors.white))),
+                          // --- PANGGIL WIDGET FOTO DI SINI ---
+                          _buildProfileAvatar(controller, post),
                           const SizedBox(width: 12),
                           Text(post['user_name'] ?? 'Anonim', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                         ],
@@ -165,12 +184,30 @@ class FeedbackScreen extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(color: const Color(0xFF1A1C24), borderRadius: BorderRadius.circular(12)),
-                            child: Column(
+                            
+                            // --- FOTO PROFIL UNTUK BALASAN ---
+                            child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(reply['user_name'] ?? 'Anonim', style: const TextStyle(color: Colors.blueGrey, fontWeight: FontWeight.bold, fontSize: 12)),
-                                const SizedBox(height: 4),
-                                Text(reply['content'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 14)),
+                                // Foto Profil Balasan (Ukurannya diperkecil)
+                                SizedBox(
+                                  width: 32,
+                                  height: 32,
+                                  child: _buildProfileAvatar(controller, reply),
+                                ),
+                                const SizedBox(width: 10),
+                                
+                                // Teks Nama & Komentar
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(reply['user_name'] ?? 'Anonim', style: const TextStyle(color: Colors.blueGrey, fontWeight: FontWeight.bold, fontSize: 12)),
+                                      const SizedBox(height: 4),
+                                      Text(reply['content'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 14)),
+                                    ],
+                                  ),
+                                ),
                               ],
                             ),
                           ),

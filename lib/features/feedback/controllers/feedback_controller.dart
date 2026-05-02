@@ -115,4 +115,16 @@ class FeedbackController extends GetxController {
       Get.snackbar('Error', 'Gagal mengirim balasan: $e', backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
+  String? getUserPhoto(String? email) {
+    if (email == null || email.isEmpty) return null;
+    
+    // Ambil data user dari Hive berdasarkan email
+    var userData = authBox.get(email);
+    
+    // Jika data ada dan photoUrl tidak kosong, kembalikan url-nya
+    if (userData != null && userData['avatar_url'] != null && userData['avatar_url'].toString().isNotEmpty) {
+      return userData['avatar_url'];
+    }
+    return null;
+  }
 }
