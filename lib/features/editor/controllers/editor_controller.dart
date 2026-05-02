@@ -205,7 +205,13 @@ class EditorController extends GetxController {
     }
   }
 
-  void _onShakeDetected() => resetEffects(fromSensor: true);
+  void _onShakeDetected() {
+    // [PERBAIKAN] Cek rute halaman saat ini. 
+    // Hanya eksekusi reset jika user benar-benar sedang berada di dalam Editor
+    if (Get.currentRoute == AppRoutes.EDITOR) {
+      resetEffects(fromSensor: true);
+    }
+  }
 
   void resetEffects({bool fromSensor = false}) {
     activePresetName.value = '';
