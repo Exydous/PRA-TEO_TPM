@@ -43,8 +43,8 @@ class EditorScreen extends StatelessWidget {
         ),
         
         actions: [
-          IconButton(icon: const Icon(Icons.undo, color: Colors.white70), onPressed: controller.undo),
-          IconButton(icon: const Icon(Icons.redo, color: Colors.white70), onPressed: controller.redo),
+          IconButton(icon: const Icon(Icons.undo, color: Colors.white70), onPressed: controller.undo, tooltip: 'UNDO'),
+          IconButton(icon: const Icon(Icons.redo, color: Colors.white70), onPressed: controller.redo, tooltip: 'REDO'),
           
           IconButton(
             icon: const Icon(Icons.restart_alt, color: Colors.orangeAccent), 
@@ -53,7 +53,8 @@ class EditorScreen extends StatelessWidget {
           ),
           
           IconButton(
-            icon: const Icon(Icons.check, color: AppColors.primary), 
+            icon: const Icon(Icons.check, color: AppColors.primary),
+            tooltip: 'Save to Gallery',
             onPressed: controller.saveToGallery, 
           ),
         ],
