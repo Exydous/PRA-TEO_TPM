@@ -78,7 +78,7 @@ class AuthController extends GetxController {
         Get.snackbar('Selamat Datang Kembali', 'Login Biometrik Berhasil!', backgroundColor: Colors.blueGrey.shade900, colorText: Colors.white);
       }
     } catch (e) {
-      Get.snackbar('Error', 'Autentikasi biometrik gagal: $e');
+      Get.snackbar('Error', 'Autentikasi biometrik gagal');
     }
   }
 
