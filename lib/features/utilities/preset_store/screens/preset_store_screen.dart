@@ -13,11 +13,11 @@ class PresetStoreScreen extends StatelessWidget {
     final controller = Get.put(PresetStoreController());
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.black, // warna background preset
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: const Text('Premium Presets', style: TextStyle(color: Colors.white)),
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: Colors.black, // warna appbar preset
+        title: const Text('Premium Presets', style: TextStyle(color: Colors.white)), // warna teks appbar preset
+        iconTheme: const IconThemeData(color: Colors.white), // warna ikon kembali
         actions: [
           // Dropdown Pilihan Mata Uang
           Padding(
@@ -26,15 +26,15 @@ class PresetStoreScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white12,
+                  color: Colors.white12, // warna latar belakang dropdown
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Obx(() => DropdownButton<String>(
                   value: controller.selectedCurrency.value,
-                  dropdownColor: Colors.grey[900],
-                  icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                  dropdownColor: Colors.grey[900], // warna dropdown saat dibuka
+                  icon: const Icon(Icons.arrow_drop_down, color: Colors.white), // warna ikon dropdown
                   underline: const SizedBox(), 
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), // warna teks dropdown mata uang
                   onChanged: (String? newValue) {
                     if (newValue != null) {
                       // Panggil updateCurrency yang langsung menembak API kurs
@@ -61,12 +61,12 @@ class PresetStoreScreen extends StatelessWidget {
           children: [
             const Text(
               "Tingkatkan Kualitas Fotomu",
-              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold), // warna teks judul preset
             ),
             const SizedBox(height: 4),
             const Text(
               "Beli preset eksklusif dari fotografer kelas dunia.",
-              style: TextStyle(color: Colors.white54, fontSize: 14),
+              style: TextStyle(color: Colors.white54, fontSize: 14), // warna teks deskripsi preset
             ),
             const SizedBox(height: 24),
             
@@ -75,13 +75,13 @@ class PresetStoreScreen extends StatelessWidget {
               child: Obx(() {
                 // 1. Tampilkan loading jika data Supabase masih ditarik
                 if (controller.isLoading.value) {
-                  return const Center(child: CircularProgressIndicator(color: Colors.white));
+                  return const Center(child: CircularProgressIndicator(color: Colors.white)); 
                 }
 
                 // 2. Tampilkan pesan jika tabel di database kosong
                 if (controller.presets.isEmpty) {
                   return const Center(
-                    child: Text("Belum ada preset tersedia saat ini.", style: TextStyle(color: Colors.white54))
+                    child: Text("Belum ada preset tersedia saat ini.", style: TextStyle(color: Colors.white54)) // warna teks pesan kosong preset
                   );
                 }
 
@@ -111,7 +111,7 @@ class PresetStoreScreen extends StatelessWidget {
   Widget _buildPresetCard(PresetStoreController controller, Map<String, dynamic> preset) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
+        color: const Color(0xFF1A1A1A), // warna latar belakang kartu preset
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white12),
       ),
@@ -128,12 +128,12 @@ class PresetStoreScreen extends StatelessWidget {
                 fit: BoxFit.cover,
                 width: double.infinity,
                 errorBuilder: (context, error, stackTrace) => Container( 
-                  color: Colors.black45,
-                  child: const Icon(Icons.broken_image, color: Colors.white54, size: 40), 
+                  color: Colors.black45, // warna latar belakang jika gambar gagal dimuat
+                  child: const Icon(Icons.broken_image, color: Colors.white54, size: 40),  // warna ikon gambar rusak preset
                 ),
                 loadingBuilder: (context, child, loadingProgress) {
                   if (loadingProgress == null) return child;
-                  return const Center(child: CircularProgressIndicator(color: Colors.white24, strokeWidth: 2));
+                  return const Center(child: CircularProgressIndicator(color: Colors.white24, strokeWidth: 2)); // warna indikator loading gambar preset
                 },
               ),
             ),
@@ -153,14 +153,14 @@ class PresetStoreScreen extends StatelessWidget {
                     children: [
                       Text(
                         preset['name'] ?? 'Unknown Preset',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13), // warna teks nama preset
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'by ${preset['author'] ?? 'Admin'}',
-                        style: const TextStyle(color: Colors.orangeAccent, fontSize: 11),
+                        style: const TextStyle(color: Colors.orangeAccent, fontSize: 11), // warna teks nama pembuat preset
                       ),
                     ],
                   ),
@@ -175,8 +175,8 @@ class PresetStoreScreen extends StatelessWidget {
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white54)
                           )
                         : Text( 
-                            controller.getConvertedPrice((preset['price_usd'] as num?)?.toDouble() ?? 0.0),
-                            style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+                            controller.getConvertedPrice((preset['price_usd'] as num?)?.toDouble() ?? 0.0), 
+                            style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600), // warna teks harga preset
                           )
                       ),
                       const SizedBox(height: 8),
@@ -194,11 +194,11 @@ class PresetStoreScreen extends StatelessWidget {
                             height: 32,
                             child: OutlinedButton.icon(
                               onPressed: () {
-                                Get.snackbar('Tersedia', 'Preset ini sudah ada di Editor-mu!', backgroundColor: Colors.blueGrey.shade900, colorText: Colors.white);
+                                Get.snackbar('Tersedia', 'Preset ini sudah ada di Editor-mu!', backgroundColor: Colors.blueGrey.shade900, colorText: Colors.white); // warna snackbar jika preset sudah dimiliki
                               },
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.white54,
-                                side: const BorderSide(color: Colors.white24),
+                                foregroundColor: Colors.white54, // warna teks tombol owned preset
+                                side: const BorderSide(color: Colors.white24), // warna border tombol owned preset
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 padding: EdgeInsets.zero,
                               ),
@@ -215,8 +215,8 @@ class PresetStoreScreen extends StatelessWidget {
                               // --- [DIUBAH] Navigasi ke PaymentScreen dan membawa data preset ---
                               onPressed: () => Get.toNamed(AppRoutes.PAYMENT, arguments: preset),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white, 
-                                foregroundColor: Colors.black,
+                                backgroundColor: Colors.white, // warna latar belakang tombol beli preset
+                                foregroundColor: Colors.black, // warna teks tombol beli preset
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),

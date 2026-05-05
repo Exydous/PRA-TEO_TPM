@@ -7,3 +7,5 @@ class AppColors {
   static const Color textMain = Colors.white;
   static const Color textSecondary = Colors.grey;
 }
+
+// for background, surface, primary, textMain, and textSecondary colors in a dark theme.

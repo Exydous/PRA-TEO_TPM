@@ -35,7 +35,7 @@ class LoginScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textMain,
+                    color: AppColors.textMain, // warna teks utama untuk judul
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -47,7 +47,7 @@ class LoginScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 16,
-                    color: AppColors.textSecondary,
+                    color: AppColors.textSecondary, // warna teks sekunder untuk deskripsi
                   ),
                 ),
                 const SizedBox(height: 48),
@@ -56,18 +56,19 @@ class LoginScreen extends StatelessWidget {
                 if (!controller.isLoginMode.value) ...[
                   TextField(
                     controller: controller.nameController,
-                    style: const TextStyle(color: AppColors.textMain),
+                    style: const TextStyle(color: AppColors.textMain), // warna teks utama untuk input nama
                     decoration: InputDecoration(
                       labelText: 'Your Name',
-                      hintText: 'First and last name', 
-                      hintStyle: const TextStyle(color: Colors.white24),
-                      prefixIcon: const Icon(Icons.person_outline, color: AppColors.textSecondary),
+                      hintText: 'First and last name',
+                      labelStyle: const TextStyle(color: AppColors.textSecondary), // warna label
+                      hintStyle: const TextStyle(color: Colors.white24), // warna placeholder
+                      prefixIcon: const Icon(Icons.person_outline, color: AppColors.textSecondary), // warna icon
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.primary),
+                        borderSide: const BorderSide(color: Color.fromARGB(255, 0, 170, 249)), // warna tepi
                       ),
                     ),
                   ),
@@ -78,17 +79,17 @@ class LoginScreen extends StatelessWidget {
                 TextField(
                   controller: controller.emailController, 
                   keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(color: AppColors.textMain),
+                  style: const TextStyle(color: AppColors.textMain), // warna teks utama untuk input email
                   decoration: InputDecoration(
                     labelText: 'Email',
-                    labelStyle: const TextStyle(color: AppColors.textSecondary),
-                    prefixIcon: const Icon(Icons.email_outlined, color: AppColors.textSecondary),
+                    labelStyle: const TextStyle(color: AppColors.textSecondary), // warna label
+                    prefixIcon: const Icon(Icons.email_outlined, color: AppColors.textSecondary), // warna icon
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.primary),
+                      borderSide: const BorderSide(color: AppColors.primary), // warna tepi
                     ),
                   ),
                 ),
@@ -98,17 +99,17 @@ class LoginScreen extends StatelessWidget {
                 TextField(
                   controller: controller.passwordController, 
                   obscureText: true, 
-                  style: const TextStyle(color: AppColors.textMain),
+                  style: const TextStyle(color: AppColors.textMain), // warna teks utama untuk input password
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    labelStyle: const TextStyle(color: AppColors.textSecondary),
-                    prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textSecondary),
+                    labelStyle: const TextStyle(color: AppColors.textSecondary), // warna label
+                    prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textSecondary), // warna icon
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.primary),
+                      borderSide: const BorderSide(color: AppColors.primary), // warna tepi
                     ),
                   ),
                 ),
@@ -121,16 +122,17 @@ class LoginScreen extends StatelessWidget {
                   TextField(
                     controller: controller.rePasswordController,
                     obscureText: true,
-                    style: const TextStyle(color: AppColors.textMain),
+                    style: const TextStyle(color: AppColors.textMain), // warna teks utama untuk input re-password
                     decoration: InputDecoration(
                       labelText: 'Re-enter password',
-                      prefixIcon: const Icon(Icons.lock_reset_outlined, color: AppColors.textSecondary),
+                      labelStyle: const TextStyle(color: AppColors.textSecondary), // warna label
+                      prefixIcon: const Icon(Icons.lock_reset_outlined, color: AppColors.textSecondary), // warna icon
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.primary),
+                        borderSide: const BorderSide(color: AppColors.primary), // warna tepi
                       ),
                     ),
                   ),
@@ -141,10 +143,10 @@ class LoginScreen extends StatelessWidget {
                 SizedBox(
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: controller.isLoading.value ? null : controller.submit,
+                    onPressed: controller.isLoading.value ? null : controller.submit, // mencegah multiple submit saat loading
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.black, 
+                      backgroundColor: AppColors.primary, // warna tombol login dan daftar
+                      foregroundColor: Colors.black, // warna teks tombol login dan daftar
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -154,7 +156,7 @@ class LoginScreen extends StatelessWidget {
                         ? const SizedBox(
                             height: 24, 
                             width: 24, 
-                            child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2)
+                            child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2) // loading spinner kecil dengan warna hitam agar kontras di tombol kuning
                           )
                         : Text(
                             controller.isLoginMode.value ? 'LOGIN' : 'DAFTAR',
@@ -170,13 +172,13 @@ class LoginScreen extends StatelessWidget {
                   children: [
                     Text(
                       controller.isLoginMode.value ? "Belum punya akun? " : "Sudah punya akun? ",
-                      style: const TextStyle(color: AppColors.textSecondary),
+                      style: const TextStyle(color: AppColors.textSecondary), // warna teks pertanyaan
                     ),
                     TextButton(
                       onPressed: controller.toggleMode,
                       child: Text(
                         controller.isLoginMode.value ? "Daftar di sini" : "Masuk di sini",
-                        style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold), // warna teks link routes
                       ),
                     )
                   ],
@@ -190,17 +192,17 @@ class LoginScreen extends StatelessWidget {
                     controller.hasSavedUser.value) ...[
                   const Row(
                     children: [
-                      Expanded(child: Divider(color: Colors.white24)),
+                      Expanded(child: Divider(color: Colors.white24)), // warna garis pembatas kiri
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Text('ATAU MASUK CEPAT', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                        child: Text('LOGIN WITH BIOMETRIC', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)), // warna teks untuk label biometric
                       ),
-                      Expanded(child: Divider(color: Colors.white24)),
+                      Expanded(child: Divider(color: Colors.white24)), // warna garis pembatas kanan
                     ],
                   ),
                   const SizedBox(height: 16),
 
-                  OutlinedButton.icon(
+                  OutlinedButton.icon( // muncul saat login, hp mendukung biometrik, dan user pernah login (ada data biometrik tersimpan)
                     onPressed: controller.loginWithBiometric, // Panggil fungsi di AuthController
                     icon: const Icon(Icons.fingerprint, size: 28),
                     label: const Text(
@@ -209,8 +211,8 @@ class LoginScreen extends StatelessWidget {
                     ),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      foregroundColor: AppColors.primary,
-                      side: const BorderSide(color: AppColors.primary),
+                      foregroundColor: AppColors.primary, // warna teks dan icon tombol biometric
+                      side: const BorderSide(color: AppColors.primary), // warna border tombol biometric
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),

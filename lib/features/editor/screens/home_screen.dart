@@ -17,17 +17,17 @@ class HomeScreen extends StatelessWidget {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: Obx(() => AppBar(
-          backgroundColor: draftCtrl.isSelectionMode.value ? const Color(0xFF1A1A1A) : Colors.black,
+          backgroundColor: draftCtrl.isSelectionMode.value ? const Color(0xFF1A1A1A) : Colors.black, // warna background tulisan gallery & workspace
           elevation: 0,
           title: Text(
             draftCtrl.isSelectionMode.value 
                 ? '${draftCtrl.selectedIds.length} Dipilih'
                 : 'Gallery & Workspace', 
-            style: const TextStyle(color: Colors.white)
+            style: const TextStyle(color: Colors.white) // warna tulisan gallery & workspace atau jumlah yang dipilih
           ),
           leading: draftCtrl.isSelectionMode.value
               ? IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
+                  icon: const Icon(Icons.close, color: Colors.white), // warna ikon close
                   onPressed: draftCtrl.cancelSelection,
                 )
               : null,
@@ -35,12 +35,12 @@ class HomeScreen extends StatelessWidget {
               ? [
                   if (draftCtrl.selectedIds.length == 1)
                     IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.white),
+                      icon: const Icon(Icons.edit, color: Colors.white), // warna ikon rename
                       tooltip: 'Change Name',
                       onPressed: draftCtrl.showRenameDialog,
                     ),
                   IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.redAccent),
+                    icon: const Icon(Icons.delete, color: Colors.redAccent), // warna ikon delete
                     tooltip: 'Delete Draft',
                     onPressed: draftCtrl.deleteSelectedDrafts,
                   ),
@@ -65,15 +65,15 @@ class HomeScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A1A),
+                  color: const Color(0xFF1A1A1A), // warna background tombol bikin baru
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white12),
+                  border: Border.all(color: Colors.white12), // warna border tombol bikin baru
                 ),
                 child: Column(
                   children: const [
-                    Icon(Icons.add_photo_alternate, size: 48, color: Colors.blueAccent),
+                    Icon(Icons.add_photo_alternate, size: 48, color: Colors.blueAccent), // warna ikon tambah
                     SizedBox(height: 12),
-                    Text('Edit Photos', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text('Edit Photos', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)), // warna teks tombol bikin baru
                   ],
                 ),
               ),
@@ -96,13 +96,13 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   // --- FITUR BARU: SEARCH BAR ---
                   TextField(
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.white), // warna teks input pencarian
                     decoration: InputDecoration(
                       hintText: "Search draft...",
-                      hintStyle: const TextStyle(color: Colors.white38),
-                      prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                      hintStyle: const TextStyle(color: Colors.white38), // warna placeholder pencarian
+                      prefixIcon: const Icon(Icons.search, color: Colors.white54), // warna ikon pencarian
                       filled: true,
-                      fillColor: const Color(0xFF1A1A1A),
+                      fillColor: const Color(0xFF1A1A1A), // warna background search bar
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -115,7 +115,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  const Text('Last Workspace', style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold)),
+                  const Text('Last Workspace', style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold)), // warna teks "Last Workspace"
                   const SizedBox(height: 12),
                   
                   // Jika hasil pencarian kosong (tidak ada yang cocok)
@@ -123,7 +123,7 @@ class HomeScreen extends StatelessWidget {
                     const Center(
                       child: Padding(
                         padding: EdgeInsets.only(top: 32.0),
-                        child: Text("Draft not found", style: TextStyle(color: Colors.white38, fontSize: 16)),
+                        child: Text("Draft not found", style: TextStyle(color: Colors.white38, fontSize: 16)), // warna teks "Draft not found"
                       ),
                     )
                   else
@@ -142,10 +142,10 @@ class HomeScreen extends StatelessWidget {
                           return Container(
                             margin: const EdgeInsets.only(bottom: 16),
                             decoration: BoxDecoration(
-                              color: isSelected ? Colors.orangeAccent.withOpacity(0.1) : const Color(0xFF1A1A1A),
+                              color: isSelected ? Colors.orangeAccent.withOpacity(0.1) : const Color(0xFF1A1A1A), // warna background saat dipilih dan tidak dipilih
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: isSelected ? Colors.orangeAccent : Colors.orangeAccent.withOpacity(0.5),
+                                color: isSelected ? Colors.orangeAccent : Colors.orangeAccent.withOpacity(0.5), // warna border saat dipilih dan tidak dipilih
                                 width: isSelected ? 2 : 1, 
                               ),
                             ),
@@ -178,13 +178,14 @@ class HomeScreen extends StatelessWidget {
                                           loadingBuilder: (context, child, loadingProgress) {
                                             if (loadingProgress == null) return child;
                                             return Container(
-                                              width: 100, height: 120, color: Colors.grey[900], 
+                                              width: 100, height: 120, color: Colors.grey[900], // warna background saat gambar sedang loading
                                               child: const Center(child: CircularProgressIndicator(color: Colors.orangeAccent, strokeWidth: 2))
                                             );
                                           },
                                           errorBuilder: (context, error, stackTrace) => Container(
-                                            width: 100, height: 120, color: Colors.grey[900], 
-                                            child: const Icon(Icons.broken_image, color: Colors.white54)
+                                            width: 100, height: 120, color: Colors.grey[900], // warna background saat gambar gagal dimuat
+
+                                            child: const Icon(Icons.broken_image, color: Colors.white54) // warna ikon saat gambar gagal dimuat
                                           ),
                                         ),
                                       ),
@@ -198,20 +199,20 @@ class HomeScreen extends StatelessWidget {
                                             children: [
                                               Text(
                                                 draft['draft_name'] ?? 'No Name',
-                                                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold), // warna teks nama draft
                                                 maxLines: 2, 
                                                 overflow: TextOverflow.ellipsis, 
                                               ),
                                               const SizedBox(height: 6),
-                                              Text('Exposure: ${(draft['exposure'] ?? 0).toInt()}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
-                                              Text('Saturation: ${(draft['saturation'] ?? 0).toInt()}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                                              Text('Exposure: ${(draft['exposure'] ?? 0).toInt()}', style: const TextStyle(color: Colors.white54, fontSize: 11)), // warna teks exposure
+                                              Text('Saturation: ${(draft['saturation'] ?? 0).toInt()}', style: const TextStyle(color: Colors.white54, fontSize: 11)), // warna teks saturation
                                             ],
                                           ),
                                         ),
                                       ),
                                       const Padding(
                                         padding: EdgeInsets.only(right: 16.0),
-                                        child: Icon(Icons.chevron_right, color: Colors.orangeAccent),
+                                        child: Icon(Icons.chevron_right, color: Colors.orangeAccent), // warna ikon panah kanan
                                       ),
                                     ],
                                   ),
@@ -224,8 +225,8 @@ class HomeScreen extends StatelessWidget {
                                     right: 10,
                                     child: IgnorePointer(
                                       child: isSelected
-                                          ? const Icon(Icons.check_box, color: Colors.orangeAccent, size: 28)
-                                          : const Icon(Icons.check_box_outline_blank, color: Colors.white54, size: 28),
+                                          ? const Icon(Icons.check_box, color: Colors.orangeAccent, size: 28) // warna ikon saat dipilih
+                                          : const Icon(Icons.check_box_outline_blank, color: Colors.white54, size: 28), // warna ikon saat tidak dipilih
                                     ),
                                   ),
                               ],

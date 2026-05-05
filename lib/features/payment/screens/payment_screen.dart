@@ -21,23 +21,23 @@ class PaymentScreen extends StatelessWidget {
 
     final storeCtrl = Get.find<PresetStoreController>();
 
-    const bgColor = Color(0xFF12141D); 
-    const cardColor = Color(0xFF1E2230); 
-    const primaryBlue = Color(0xFF1E3A8A); 
-    const textMain = Colors.white;
-    const textSecondary = Colors.white54;
-    const accentYellow = Color.fromARGB(255, 0, 212, 255); 
+    const bgColor = Color(0xFF12141D); // warna background payment
+    const cardColor = Color(0xFF1E2230); // warna background kartu pembayaran dan metode pembayaran
+    const primaryBlue = Color(0xFF1E3A8A);  // warna background kartu preset yang dibeli
+    const textMain = Colors.white; // warna teks utama (harga, judul, dll)
+    const textSecondary = Colors.white54; // warna teks sekunder (deskripsi, biaya layanan, dll)
+    const accent = Color.fromARGB(255, 0, 212, 255); // warna aksen untuk badge "Akses Selamanya" dan tombol bayar
 
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: bgColor, // warna background bukan semua
       appBar: AppBar(
-        backgroundColor: bgColor,
+        backgroundColor: bgColor, // warna background appbar
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: textMain),
+          icon: const Icon(Icons.arrow_back, color: textMain), // warna ikon back
           onPressed: () => Get.back(),
         ),
-        title: const Text('Pembayaran', style: TextStyle(color: textMain, fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text('Pembayaran', style: TextStyle(color: textMain, fontSize: 18, fontWeight: FontWeight.bold)), // warna teks pembayaran
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -48,16 +48,16 @@ class PaymentScreen extends StatelessWidget {
             // --- KARTU PRESET ---
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: primaryBlue, borderRadius: BorderRadius.circular(16)),
+              decoration: BoxDecoration(color: primaryBlue, borderRadius: BorderRadius.circular(16)), // warna background kartu preset yang dibeli
               child: Row(
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      width: 70, height: 90, color: Colors.white12, 
+                      width: 70, height: 90, color: Colors.white12, // latar belakang abu-abu jika gambar gagal dimuat
                       child: presetImage.isNotEmpty
-                          ? Image.network(presetImage, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.white54))
-                          : const Icon(Icons.color_lens, color: Colors.white, size: 32),
+                          ? Image.network(presetImage, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.white54)) // menampilkan gambar preset, dengan fallback jika gagal
+                          : const Icon(Icons.color_lens, color: Colors.white, size: 32), // ikon default jika tidak ada gambar
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -65,14 +65,14 @@ class PaymentScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(presetName, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        Text(presetName, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis), // warna teks nama preset
                         const SizedBox(height: 4),
-                        Text('by $presetAuthor', style: const TextStyle(color: Colors.white70, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        Text('by $presetAuthor', style: const TextStyle(color: Colors.white70, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis), // warna teks nama pembuat preset
                         const SizedBox(height: 12),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(color: accentYellow, borderRadius: BorderRadius.circular(12)),
-                          child: const Text('Akses Selamanya', style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold)),
+                          decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(12)),// warna aksen untuk badge "Akses Selamanya"
+                          child: const Text('Akses Selamanya', style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold)), // warna teks akses selamanya
                         ),
                       ],
                     ),
@@ -87,11 +87,11 @@ class PaymentScreen extends StatelessWidget {
               ? const Center(child: Padding(padding: EdgeInsets.all(16.0), child: CircularProgressIndicator(color: Colors.white54)))
               : Column(
                   children: [
-                    _buildPriceRow('Harga Preset', storeCtrl.getConvertedPrice(basePrice), textSecondary, textMain),
+                    _buildPriceRow('Harga Preset', storeCtrl.getConvertedPrice(basePrice), textSecondary, textMain), // warna teks harga preset
                     const SizedBox(height: 12),
-                    _buildPriceRow('Biaya Layanan', storeCtrl.getConvertedPrice(serviceFee), textSecondary, textMain),
-                    const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(color: Colors.white12)),
-                    _buildPriceRow('Total Pembayaran', storeCtrl.getConvertedPrice(totalPrice), textMain, textMain, isBold: true),
+                    _buildPriceRow('Biaya Layanan', storeCtrl.getConvertedPrice(serviceFee), textSecondary, textMain), // warna teks biaya layanan
+                    const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(color: Colors.white12)), // warna garis pemisah
+                    _buildPriceRow('Total Pembayaran', storeCtrl.getConvertedPrice(totalPrice), textMain, textMain, isBold: true), // warna teks total pembayaran
                   ],
                 )
             ),
@@ -99,7 +99,7 @@ class PaymentScreen extends StatelessWidget {
             const SizedBox(height: 32),
 
             // --- METODE PEMBAYARAN DINAMIS ---
-            const Text('Pilih Metode Pembayaran', style: TextStyle(color: textMain, fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text('Pilih Metode Pembayaran', style: TextStyle(color: textMain, fontSize: 16, fontWeight: FontWeight.bold)), // warna teks pilih metode pembayaran
             const SizedBox(height: 16),
 
             Obx(() {
@@ -107,7 +107,7 @@ class PaymentScreen extends StatelessWidget {
               final currentMethods = controller.currentPaymentMethods;
 
               return Container(
-                decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white12)),
+                decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white12)), // warna background kartu pembayaran dan metode pembayaran
                 child: Column(
                   children: currentMethods.map((methodMap) {
                     String methodName = methodMap['name']!;
@@ -123,7 +123,7 @@ class PaymentScreen extends StatelessWidget {
                             width: 36, height: 36,
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              color: Colors.white, // Latar putih agar logo gopay/ovo jelas
+                              color: Colors.white, // warna Latar putih agar logo gopay/ovo jelas
                               borderRadius: BorderRadius.circular(8),
                             ),
                             // Memanggil ikon asli dari aset lokal
@@ -131,18 +131,18 @@ class PaymentScreen extends StatelessWidget {
                               methodIcon,
                               fit: BoxFit.contain,
                               // Fallback jika lupa memasukkan gambar ke folder assets
-                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.account_balance_wallet, color: Colors.black45, size: 20),
+                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.account_balance_wallet, color: Colors.black45, size: 20), // warna ikon fallback jika gambar tidak ditemukan
                             ),
                           ),
                           title: Text(
                             methodName,
-                            style: TextStyle(color: isSelected ? textMain : textSecondary, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
+                            style: TextStyle(color: isSelected ? textMain : textSecondary, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal), // warna teks nama metode pembayaran yang dipilih
                           ),
                           trailing: isSelected
-                              ? const Icon(Icons.radio_button_checked, color: Colors.blueAccent)
+                              ? const Icon(Icons.radio_button_checked, color: Colors.blueAccent) // warna ikon yang dipilih
                               : const Icon(Icons.radio_button_unchecked, color: Colors.white24),
                         ),
-                        if (!isLast) const Divider(color: Colors.white12, height: 1, indent: 16, endIndent: 16),
+                        if (!isLast) const Divider(color: Colors.white12, height: 1, indent: 16, endIndent: 16), // warna garis pemisah antar metode pembayaran, dengan padding kiri dan kanan
                       ],
                     );
                   }).toList(),
@@ -157,7 +157,7 @@ class PaymentScreen extends StatelessWidget {
       bottomNavigationBar: SafeArea(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          decoration: const BoxDecoration(color: bgColor, border: Border(top: BorderSide(color: Colors.white12))),
+          decoration: const BoxDecoration(color: bgColor, border: Border(top: BorderSide(color: Colors.white12))), // warna background bottom bar dan garis pemisah atas
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -165,19 +165,19 @@ class PaymentScreen extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Total Harga', style: TextStyle(color: textSecondary, fontSize: 12)),
+                  const Text('Total Harga', style: TextStyle(color: textSecondary, fontSize: 12)), // warna teks total harga
                   const SizedBox(height: 4),
                   Obx(() => storeCtrl.isCurrencyLoading.value
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : Text(storeCtrl.getConvertedPrice(totalPrice), style: const TextStyle(color: textMain, fontSize: 18, fontWeight: FontWeight.bold))
+                      : Text(storeCtrl.getConvertedPrice(totalPrice), style: const TextStyle(color: textMain, fontSize: 18, fontWeight: FontWeight.bold)) // warna nominal total harga
                   ),
                 ],
               ),
               ElevatedButton.icon(
                 onPressed: controller.processPayment,
-                icon: const Text('Bayar Sekarang', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
-                label: const Icon(Icons.lock_outline, color: Colors.black, size: 16),
-                style: ElevatedButton.styleFrom(backgroundColor: accentYellow, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                icon: const Text('Bayar Sekarang', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)), // warna teks tombol bayar
+                label: const Icon(Icons.lock_outline, color: Colors.black, size: 16), // warna ikon gembok pada tombol bayar
+                style: ElevatedButton.styleFrom(backgroundColor: accent, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), // warna background tombol bayar dan bentuknya
               ),
             ],
           ),

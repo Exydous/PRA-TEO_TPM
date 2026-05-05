@@ -12,13 +12,13 @@ class FeedbackScreen extends StatelessWidget {
 
     if (photoUrl != null && photoUrl.isNotEmpty) {
       return CircleAvatar(
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Colors.blueAccent, // warna fallback saat gambar gagal dimuat
         backgroundImage: NetworkImage(photoUrl),
       );
     } else {
       return CircleAvatar(
-        backgroundColor: Colors.blueAccent,
-        child: Text(initial, style: const TextStyle(color: Colors.white)),
+        backgroundColor: Colors.blueAccent, // warna fallback saat gambar gagal dimuat
+        child: Text(initial, style: const TextStyle(color: Colors.white)), // Tampilkan inisial nama jika tidak ada foto
       );
     }
   }
@@ -28,10 +28,10 @@ class FeedbackScreen extends StatelessWidget {
     final FeedbackController controller = Get.put(FeedbackController());
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0B0F),
+      backgroundColor: const Color(0xFF0A0B0F), // Warna gelap untuk tema malam
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0B0F),
-        title: const Text('Komunitas & Feedback', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF0A0B0F), // Warna gelap untuk tema malam
+        title: const Text('Komunitas & Feedback', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), // warna putih untuk teks judul
         centerTitle: true,
       ),
       body: Obx(() {
@@ -40,7 +40,7 @@ class FeedbackScreen extends StatelessWidget {
         }
 
         if (controller.feedbacks.isEmpty) {
-          return const Center(child: Text("Belum ada diskusi. Jadilah yang pertama!", style: TextStyle(color: Colors.white54)));
+          return const Center(child: Text("Belum ada diskusi. Jadilah yang pertama!", style: TextStyle(color: Colors.white54))); // warna putih54 untuk teks placeholder saat belum ada diskusi
         }
 
         return ListView.builder(
@@ -49,7 +49,7 @@ class FeedbackScreen extends StatelessWidget {
           itemBuilder: (context, index) {
             final post = controller.feedbacks[index];
             return Card(
-              color: const Color(0xFF1A1C24),
+              color: const Color(0xFF1A1C24), // warna card untuk tema malam
               margin: const EdgeInsets.only(bottom: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: ListTile(
@@ -58,12 +58,12 @@ class FeedbackScreen extends StatelessWidget {
                 // --- PANGGIL WIDGET FOTO DI SINI ---
                 leading: _buildProfileAvatar(controller, post),
                 
-                title: Text(post['user_name'] ?? 'Anonim', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                title: Text(post['user_name'] ?? 'Anonim', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)), // warna putih untuk nama pengguna
                 subtitle: Padding(
                   padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(post['content'] ?? '', style: const TextStyle(color: Colors.white70)),
+                  child: Text(post['content'] ?? '', style: const TextStyle(color: Colors.white70)), // warna untuk isi komentar
                 ),
-                trailing: const Icon(Icons.chat_bubble_outline, color: Colors.white54, size: 20),
+                trailing: const Icon(Icons.chat_bubble_outline, color: Colors.white54, size: 20), // warna untuk ikon komentar
                 onTap: () => _showRepliesBottomSheet(context, controller, post),
               ),
             );
@@ -71,9 +71,9 @@ class FeedbackScreen extends StatelessWidget {
         );
       }),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Colors.blueAccent,
-        icon: const Icon(Icons.edit, color: Colors.white),
-        label: const Text('Buat Post', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.blueAccent, // warna buat post
+        icon: const Icon(Icons.edit, color: Colors.white), // warna untuk ikon buat post
+        label: const Text('Buat Post', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), // warna untuk teks buat post
         onPressed: () => _showCreatePostDialog(context, controller),
       ),
     );
@@ -86,24 +86,24 @@ class FeedbackScreen extends StatelessWidget {
       Container(
         padding: const EdgeInsets.all(20),
         decoration: const BoxDecoration(
-          color: Color(0xFF13151D),
+          color: Color(0xFF13151D), // warna untuk dialog buat post
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Buat Diskusi Baru', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Buat Diskusi Baru', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)), // warna untuk teks buat diskusi baru
             const SizedBox(height: 16),
             TextField(
               controller: textCtrl,
               maxLines: 4,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.white), // warna untuk teks input
               decoration: InputDecoration(
                 hintText: 'Tulis pertanyaan, saran, atau temuan bug...',
-                hintStyle: const TextStyle(color: Colors.white38),
+                hintStyle: const TextStyle(color: Colors.white38), // warna untuk teks placeholder
                 filled: true,
-                fillColor: Colors.black26,
+                fillColor: Colors.black26, // warna untuk background input
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
             ),
@@ -111,13 +111,13 @@ class FeedbackScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, padding: const EdgeInsets.symmetric(vertical: 14)),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, padding: const EdgeInsets.symmetric(vertical: 14)), // warna untuk tombol posting
                 onPressed: () {
                   if (textCtrl.text.trim().isNotEmpty) {
                     controller.postFeedback(textCtrl.text.trim());
                   }
                 },
-                child: const Text('Posting', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: const Text('Posting', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), // warna untuk teks tombol posting
               ),
             )
           ],
@@ -134,7 +134,7 @@ class FeedbackScreen extends StatelessWidget {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF13151D),
+      backgroundColor: const Color(0xFF13151D), // warna untuk background isi balasan
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
@@ -148,23 +148,23 @@ class FeedbackScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: Colors.white12)),
+                    border: Border(bottom: BorderSide(color: Colors.white12)), // warna untuk border bawah
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(10)))),
+                      Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(10)))), // warna untuk indikator tarik sheet
                       const SizedBox(height: 16),
                       Row(
                         children: [
                           // --- PANGGIL WIDGET FOTO DI SINI ---
                           _buildProfileAvatar(controller, post),
                           const SizedBox(width: 12),
-                          Text(post['user_name'] ?? 'Anonim', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text(post['user_name'] ?? 'Anonim', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)), // warna untuk nama pengguna di header
                         ],
                       ),
                       const SizedBox(height: 12),
-                      Text(post['content'] ?? '', style: const TextStyle(color: Colors.white70, fontSize: 15)),
+                      Text(post['content'] ?? '', style: const TextStyle(color: Colors.white70, fontSize: 15)), // warna untuk isi komentar di header milik pembuat post
                     ],
                   ),
                 ),
@@ -172,7 +172,7 @@ class FeedbackScreen extends StatelessWidget {
                 Expanded(
                   child: Obx(() {
                     if (controller.isRepliesLoading.value) return const Center(child: CircularProgressIndicator());
-                    if (controller.replies.isEmpty) return const Center(child: Text('Belum ada balasan.', style: TextStyle(color: Colors.white54)));
+                    if (controller.replies.isEmpty) return const Center(child: Text('Belum ada balasan.', style: TextStyle(color: Colors.white54))); // warna untuk teks placeholder saat belum ada balasan
 
                     return ListView.builder(
                       padding: const EdgeInsets.all(16),
@@ -183,7 +183,7 @@ class FeedbackScreen extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 12.0, left: 24.0), // Di-indent ke kanan agar terlihat seperti balasan
                           child: Container(
                             padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(color: const Color(0xFF1A1C24), borderRadius: BorderRadius.circular(12)),
+                            decoration: BoxDecoration(color: const Color(0xFF1A1C24), borderRadius: BorderRadius.circular(12)), // warna untuk card balasan
                             
                             // --- FOTO PROFIL UNTUK BALASAN ---
                             child: Row(
@@ -202,9 +202,9 @@ class FeedbackScreen extends StatelessWidget {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(reply['user_name'] ?? 'Anonim', style: const TextStyle(color: Colors.blueGrey, fontWeight: FontWeight.bold, fontSize: 12)),
+                                      Text(reply['user_name'] ?? 'Anonim', style: const TextStyle(color: Colors.blueGrey, fontWeight: FontWeight.bold, fontSize: 12)), // warna untuk nama pengguna di balasan
                                       const SizedBox(height: 4),
-                                      Text(reply['content'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 14)),
+                                      Text(reply['content'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 14)), // warna untuk isi komentar di balasan
                                     ],
                                   ),
                                 ),
@@ -219,18 +219,18 @@ class FeedbackScreen extends StatelessWidget {
                 // Kolom Input Balasan
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(color: Color(0xFF0A0B0F), border: Border(top: BorderSide(color: Colors.white12))),
+                  decoration: const BoxDecoration(color: Color(0xFF0A0B0F), border: Border(top: BorderSide(color: Colors.white12))), // warna untuk bagian input balasan
                   child: Row(
                     children: [
                       Expanded(
                         child: TextField(
                           controller: replyCtrl,
-                          style: const TextStyle(color: Colors.white),
+                          style: const TextStyle(color: Colors.white), // warna untuk teks input balasan
                           decoration: InputDecoration(
                             hintText: 'Tulis balasan...',
-                            hintStyle: const TextStyle(color: Colors.white38),
+                            hintStyle: const TextStyle(color: Colors.white38), // warna untuk teks placeholder di input balasan
                             filled: true,
-                            fillColor: const Color(0xFF1A1C24),
+                            fillColor: const Color(0xFF1A1C24), // warna untuk background input balasan
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
                           ),
@@ -238,9 +238,9 @@ class FeedbackScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       CircleAvatar(
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: Colors.blueAccent, // warna untuk tombol kirim balasan
                         child: IconButton(
-                          icon: const Icon(Icons.send, color: Colors.white, size: 18),
+                          icon: const Icon(Icons.send, color: Colors.white, size: 18), // warna untuk ikon kirim balasan
                           onPressed: () {
                             if (replyCtrl.text.trim().isNotEmpty) {
                               controller.postReply(post['id'], replyCtrl.text.trim());

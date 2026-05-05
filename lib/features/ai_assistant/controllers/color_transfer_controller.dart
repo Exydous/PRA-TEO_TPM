@@ -7,7 +7,7 @@ import '../../../services/color_transfer_service.dart';
 
 class ColorTransferController extends GetxController {
   var isProcessing = false.obs;
-  final ImagePicker _picker = ImagePicker();
+  final ImagePicker _picker = ImagePicker(); // Input Referensi
 
   Future<void> pickReferenceAndTransfer() async {
     try {
@@ -20,12 +20,12 @@ class ColorTransferController extends GetxController {
       File referenceFile = File(pickedFile.path);
 
       // 2. Proses analisis matematis warnanya
-      final styleData = await ColorTransferService.extractColorStyle(referenceFile);
+      final styleData = await ColorTransferService.extractColorStyle(referenceFile); // mengirim ke mesin AI untuk analisis warna
 
       if (styleData != null && Get.isRegistered<EditorController>()) {
         final editorCtrl = Get.find<EditorController>();
         
-        // 3. Terapkan nilai ke slider secara instan
+        // 3. Terapkan nilai ke slider secara instan dari mesin AI
         editorCtrl.exposure.value = styleData['exposure']!;
         editorCtrl.contrast.value = styleData['contrast']!;
         editorCtrl.temperature.value = styleData['temperature']!;

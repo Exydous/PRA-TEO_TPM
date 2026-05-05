@@ -9,7 +9,7 @@ import '../../../core/routes/app_routes.dart';
 import '../../profiles/controllers/profile_controller.dart'; 
 
 class AuthController extends GetxController {
-  final Box authBox = Hive.box('authBox'); 
+  final Box authBox = Hive.box('authBox'); // database untuk menyimpan data autentikasi
   final LocalAuthentication localAuth = LocalAuthentication(); 
   
   var isLoading = false.obs;
@@ -30,7 +30,7 @@ class AuthController extends GetxController {
     _checkBiometricAndUser(); 
   }
 
-  Future<void> _checkBiometricAndUser() async {
+  Future<void> _checkBiometricAndUser() async { // fingerprint dan cek user terakhir yang login untuk menentukan apakah tombol biometrik muncul atau tidak
     // --- [PERBAIKAN SAKLAR FINGERPRINT] ---
     // Cek apakah user mematikan fitur biometrik di profil
     bool isFingerprintEnabled = authBox.get('fingerprint_enabled', defaultValue: true);
@@ -51,7 +51,7 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> loginWithBiometric() async {
+  Future<void> loginWithBiometric() async { // fungsi untuk login menggunakan biometrik (fingerprint)
     String lastEmail = authBox.get('lastEmail', defaultValue: '');
 
     if (lastEmail.isEmpty) {
@@ -71,7 +71,7 @@ class AuthController extends GetxController {
         // --- [PERBAIKAN PROFIL GUEST] ---
         // Suruh ProfileController muat ulang data sesuai akun yang baru login
         if (Get.isRegistered<ProfileController>()) {
-          Get.find<ProfileController>().loadUserData();
+          Get.find<ProfileController>().loadUserData(); // muat ulang data user di profil setelah login biometrik, sehingga langsung tampil data sesuai akun yang login tanpa harus restart aplikasi
         }
 
         Get.offAllNamed(AppRoutes.MAIN);
@@ -82,7 +82,7 @@ class AuthController extends GetxController {
     }
   }
 
-  void _checkExistingSession() {
+  void _checkExistingSession() { // Cek apakah sudah ada user yang login sebelumnya, jika ada langsung masuk ke halaman utama
     if (authBox.containsKey('currentUser')) {
       Future.delayed(Duration.zero, () => Get.offAllNamed(AppRoutes.MAIN));
     }
@@ -96,7 +96,7 @@ class AuthController extends GetxController {
     rePasswordController.clear();
   }
 
-  String hashPassword(String password) {
+  String hashPassword(String password) { // sha256 hashing untuk keamanan password
     var bytes = utf8.encode(password);
     var digest = sha256.convert(bytes);
     return digest.toString();
@@ -115,7 +115,7 @@ class AuthController extends GetxController {
     if (isLoginMode.value) {
       await loginUser(email, rawPassword);
     } else {
-      await registerUser(name, email, rawPassword);
+      await registerUser(name, email, rawPassword); // register butuh nama juga, jadi ditambahkan parameter name
     }
   }
 
@@ -154,7 +154,7 @@ class AuthController extends GetxController {
 
         // --- [PERBAIKAN PROFIL GUEST] ---
         if (Get.isRegistered<ProfileController>()) {
-          Get.find<ProfileController>().loadUserData();
+          Get.find<ProfileController>().loadUserData(); // muat ulang data user di profil setelah login, sehingga langsung tampil data sesuai akun yang login tanpa harus restart aplikasi
         }
 
         Get.offAllNamed(AppRoutes.MAIN);
@@ -172,7 +172,7 @@ class AuthController extends GetxController {
     
     // Kembalikan ke Guest
     if (Get.isRegistered<ProfileController>()) {
-      Get.find<ProfileController>().loadUserData();
+      Get.find<ProfileController>().loadUserData(); // muat ulang data user di profil setelah logout, sehingga langsung tampil data Guest tanpa harus restart aplikasi
     }
     
     Get.offAllNamed(AppRoutes.LOGIN);

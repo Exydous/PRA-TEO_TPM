@@ -38,9 +38,9 @@ class MainScreen extends StatelessWidget {
           currentIndex: controller.selectedIndex.value,
           onTap: controller.changeTabIndex,
           type: BottomNavigationBarType.fixed, // Mencegah ikon bergeser-geser
-          backgroundColor: AppColors.surface,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textSecondary,
+          backgroundColor: AppColors.surface, // warna latar belakang tab bawah
+          selectedItemColor: AppColors.primary, // warna ikon tab yang aktif
+          unselectedItemColor: AppColors.textSecondary, // warna ikon tab yang tidak aktif
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),

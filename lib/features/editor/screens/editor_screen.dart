@@ -19,23 +19,24 @@ class EditorScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: Colors.black, 
+      backgroundColor: Colors.black, // warna background belakang foto
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.black, // warna background app bar
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
+          icon: const Icon(Icons.close, color: Colors.white), // warna ikon close
+          tooltip: 'Cancel/Save Draft',
           onPressed: controller.cancelEditing, 
         ),
         
         title: Row(
           children: [
-            const Text('Editor', style: TextStyle(color: Colors.white, fontSize: 16)),
+            const Text('Editor', style: TextStyle(color: Colors.white, fontSize: 16)), // warna tulisan editor
             const SizedBox(width: 8),
             Obx(() {
               bool isDark = controller.luxValue.value < 15;
               return Icon(
                 isDark ? Icons.nightlight_round : Icons.wb_sunny,
-                color: isDark ? Colors.amber : Colors.yellow,
+                color: isDark ? Colors.amber : Colors.yellow, // warna ikon bulan/matahari sesuai kondisi
                 size: 16,
               );
             }),
@@ -43,17 +44,17 @@ class EditorScreen extends StatelessWidget {
         ),
         
         actions: [
-          IconButton(icon: const Icon(Icons.undo, color: Colors.white70), onPressed: controller.undo, tooltip: 'UNDO'),
+          IconButton(icon: const Icon(Icons.undo, color: Colors.white70), onPressed: controller.undo, tooltip: 'UNDO'), 
           IconButton(icon: const Icon(Icons.redo, color: Colors.white70), onPressed: controller.redo, tooltip: 'REDO'),
           
           IconButton(
-            icon: const Icon(Icons.restart_alt, color: Colors.orangeAccent), 
+            icon: const Icon(Icons.restart_alt, color: Colors.orangeAccent), // warna ikon reset
             tooltip: 'Reset All Changes',
             onPressed: () => controller.resetEffects(fromSensor: false),
           ),
           
           IconButton(
-            icon: const Icon(Icons.check, color: AppColors.primary),
+            icon: const Icon(Icons.check, color: AppColors.primary), // warna ikon save
             tooltip: 'Save to Gallery',
             onPressed: controller.saveToGallery, 
           ),
@@ -93,10 +94,10 @@ class EditorScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: const BoxDecoration(
-                color: Color(0xFF1A1A1A), 
+                color: Color(0xFF1A1A1A), // warna background panel transfer color
                 border: Border(
-                  top: BorderSide(color: Colors.white12, width: 1),
-                  bottom: BorderSide(color: Colors.white12, width: 1),
+                  top: BorderSide(color: Colors.white12, width: 1), // warna border atas
+                  bottom: BorderSide(color: Colors.white12, width: 1), // warna border bawah
                 ),
               ),
               child: Row(
@@ -104,18 +105,18 @@ class EditorScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primary.withOpacity(0.2), // warna background ikon palette
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.palette, color: AppColors.primary, size: 24),
+                    child: const Icon(Icons.palette, color: AppColors.primary, size: 24), // warna ikon palette
                   ),
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Transfer Color Style', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-                        Text('Copy colors from other photos/movies', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                        Text('Transfer Color Style', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)), // warna tulisan transfer color style
+                        Text('Copy colors from other photos/movies', style: TextStyle(color: Colors.white54, fontSize: 12)), // warna tulisan penjelasan
                       ],
                     ),
                   ),
@@ -127,7 +128,7 @@ class EditorScreen extends StatelessWidget {
                     : ElevatedButton(
                         onPressed: transferCtrl.pickReferenceAndTransfer,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: AppColors.primary, // warna background tombol
                           foregroundColor: Colors.black,
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -142,7 +143,7 @@ class EditorScreen extends StatelessWidget {
             // 3. PANEL BAWAH (SLIDER & MENU)
             Obx(() => Container(
                   height: 260, 
-                  color: const Color(0xFF1A1A1A), 
+                  color: const Color(0xFF1A1A1A), // warna background panel bawah
                   child: Column(
                     children: [
                       Expanded(
@@ -154,7 +155,7 @@ class EditorScreen extends StatelessWidget {
                       // BOTTOM NAVIGATION UTAMA
                       Container(
                         height: 60,
-                        color: Colors.black,
+                        color: Colors.black, // warna background bottom navigation
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
@@ -195,9 +196,9 @@ class EditorScreen extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: isActive ? AppColors.primary : Colors.grey, size: 24),
+          Icon(icon, color: isActive ? AppColors.primary : Colors.grey, size: 24), // warna ikon crop/edit/my preset sesuai aktif/tidak
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(color: isActive ? AppColors.primary : Colors.grey, fontSize: 12)),
+          Text(label, style: TextStyle(color: isActive ? AppColors.primary : Colors.grey, fontSize: 12)), // warna teks crop/edit/my preset sesuai aktif/tidak
         ],
       ),
     );
@@ -208,13 +209,13 @@ class EditorScreen extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text("Select tool for aspect ratio and rotation", style: TextStyle(color: Colors.white54)),
+        const Text("Select tool for cropping and rotation", style: TextStyle(color: Colors.white54)), // warna teks penjelasan
         const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _iconButton(Icons.aspect_ratio, 'Aspect', controller.openCropTool),
-            _iconButton(Icons.rotate_90_degrees_ccw, 'Rotate', controller.openCropTool),
+            // _iconButton(Icons.rotate_90_degrees_ccw, 'Rotate', controller.openCropTool),
           ],
         )
       ],
@@ -229,9 +230,9 @@ class EditorScreen extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
-            Icon(icon, color: Colors.white, size: 28),
+            Icon(icon, color: Colors.white, size: 28), // warna ikon crop/rotate
             const SizedBox(height: 8),
-            Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
+            Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)), // warna teks aspect
           ],
         ),
       ),
@@ -250,7 +251,7 @@ class EditorScreen extends StatelessWidget {
         
         Container(
           height: 50,
-          decoration: const BoxDecoration(border: Border(top: BorderSide(color: Colors.white12))),
+          decoration: const BoxDecoration(border: Border(top: BorderSide(color: Colors.white12))), // warna border atas panel submenu
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -270,13 +271,13 @@ class EditorScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: isActive ? Colors.white : Colors.transparent, width: 2)),
+          border: Border(bottom: BorderSide(color: isActive ? Colors.white : Colors.transparent, width: 2)),  // warna border bawah tombol submenu           
         ),
         child: Row(
           children: [
-            Icon(icon, color: isActive ? Colors.white : Colors.grey, size: 18),
+            Icon(icon, color: isActive ? Colors.white : Colors.grey, size: 18), // warna ikon light/color sesuai aktif/tidak
             const SizedBox(width: 8),
-            Text(label, style: TextStyle(color: isActive ? Colors.white : Colors.grey, fontWeight: isActive ? FontWeight.bold : FontWeight.normal)),
+            Text(label, style: TextStyle(color: isActive ? Colors.white : Colors.grey, fontWeight: isActive ? FontWeight.bold : FontWeight.normal)), // warna teks light/color sesuai aktif/tidak
           ],
         ),
       ),
@@ -321,16 +322,16 @@ class EditorScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         children: [
-          SizedBox(width: 80, child: Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12))),
+          SizedBox(width: 80, child: Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12))), // warna label slider
           Expanded(
             child: SliderTheme(
               data: SliderThemeData(
                 trackHeight: 2,
                 thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
                 overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-                activeTrackColor: Colors.white,
-                inactiveTrackColor: Colors.white24,
-                thumbColor: Colors.white,
+                activeTrackColor: Colors.white, // warna slider yang sudah terisi
+                inactiveTrackColor: Colors.white24, // warna track tidak aktif
+                thumbColor: Colors.white, // warna lingkaran slider
               ),
               child: Slider(
                 value: rxValue.value,
@@ -346,7 +347,7 @@ class EditorScreen extends StatelessWidget {
             child: Text(
               '${rxValue.value.toInt()}$suffix', 
               textAlign: TextAlign.right,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), // warna teks nilai slider
             ),
           ),
         ],
@@ -358,10 +359,10 @@ class EditorScreen extends StatelessWidget {
   void _showPresetsBottomSheet(BuildContext context, EditorController controller) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF13151D),
+      backgroundColor: const Color(0xFF13151D), // warna background bottom sheet preset
       isScrollControlled: true, 
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)), 
       ),
       builder: (context) {
         return SafeArea( 
@@ -373,7 +374,7 @@ class EditorScreen extends StatelessWidget {
               children: [
                 const Text(
                   'My Presets',
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold), // warna teks judul preset
                 ),
                 const SizedBox(height: 16),
                 Expanded(
@@ -387,12 +388,12 @@ class EditorScreen extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.sentiment_dissatisfied, color: Colors.white38, size: 30),
+                            const Icon(Icons.sentiment_dissatisfied, color: Colors.white38, size: 30), // warna ikon sedih saat tidak ada preset
                             const SizedBox(height: 8),
                             const Text(
                               "Collections Empty. Get them from the Store!",
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.white54, fontSize: 12),
+                              style: TextStyle(color: Colors.white54, fontSize: 12), // warna teks saat tidak ada preset
                             ),
                           ],
                         ),
@@ -423,13 +424,13 @@ class EditorScreen extends StatelessWidget {
                               width: 110, 
                               margin: const EdgeInsets.only(right: 16, bottom: 8, top: 8), // Tambah margin agar glowing tidak terpotong
                               decoration: BoxDecoration(
-                                color: const Color(0xFF1A1C24),
+                                color: const Color(0xFF1A1C24), // warna background card preset
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
                                   // Jika aktif, border ikut warna utama. Jika tidak, kembali ke aturan awal (orange/putih)
                                   color: isActive 
-                                      ? AppColors.primary 
-                                      : (hasTimer ? Colors.orange.withOpacity(0.5) : Colors.white12), 
+                                      ? AppColors.primary // warna border saat preset aktif
+                                      : (hasTimer ? Colors.orange.withOpacity(0.5) : Colors.white12), // warna border saat preset tidak aktif, tapi ada timer (oranye transparan) atau tidak ada timer (putih transparan)
                                   width: isActive ? 2 : (hasTimer ? 1.5 : 1)
                                 ),
                                 // [BARU] INI DIA MESIN GLOWING-NYA!
@@ -475,7 +476,7 @@ class EditorScreen extends StatelessWidget {
                                       preset['name'] ?? 'Preset',
                                       style: TextStyle(
                                         // Warna teks juga ikut menyala jika aktif
-                                        color: isActive ? AppColors.primary : Colors.white, 
+                                        color: isActive ? AppColors.primary : Colors.white, // warna teks nama preset sesuai aktif/tidak
                                         fontSize: 12, 
                                         fontWeight: FontWeight.bold
                                       ),
@@ -546,10 +547,10 @@ class _PresetTimerBadgeState extends State<PresetTimerBadge> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         decoration: BoxDecoration(
-          color: Colors.red.shade900,
+          color: Colors.red.shade900, // warna background badge saat waktu habis
           borderRadius: const BorderRadius.only(topRight: Radius.circular(16), bottomLeft: Radius.circular(8)),
         ),
-        child: const Text('Habis', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+        child: const Text('Habis', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)), // warna teks badge saat waktu habis
       );
     }
     
@@ -559,15 +560,15 @@ class _PresetTimerBadgeState extends State<PresetTimerBadge> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.orange.shade800.withOpacity(0.9),
+        color: Colors.orange.shade800.withOpacity(0.9), // warna background badge saat masih berlaku
         borderRadius: const BorderRadius.only(topRight: Radius.circular(16), bottomLeft: Radius.circular(8)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.timer, color: Colors.white, size: 10),
+          const Icon(Icons.timer, color: Colors.white, size: 10), // warna ikon timer
           const SizedBox(width: 2),
-          Text('$minutes:$seconds', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+          Text('$minutes:$seconds', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)), // warna teks timer
         ],
       ),
     );

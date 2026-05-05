@@ -19,3 +19,6 @@ class AppTheme {
     );
   }
 }
+
+// for component from flutter, such as ThemeData, AppBarTheme, and ColorScheme, to create a dark theme using the 
+// colors defined in AppColors.

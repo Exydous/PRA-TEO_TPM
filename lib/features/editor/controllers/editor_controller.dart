@@ -85,7 +85,7 @@ class EditorController extends GetxController {
     super.onClose();
   }
 
-  void _startExpiryMonitor() {
+  void _startExpiryMonitor() { // Fungsi untuk memulai timer yang memonitor kedaluwarsa preset
     // Mengecek isi tas preset setiap 1 detik
     _expiryTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (ownedPresets.isEmpty) return;
@@ -188,15 +188,15 @@ class EditorController extends GetxController {
     Get.snackbar('✨ Preset Applied', 'Menerapkan gaya $name', snackPosition: SnackPosition.TOP, backgroundColor: Colors.black87, colorText: Colors.white, duration: const Duration(seconds: 2));
   }
 
-  void _initLightSensor() {
+  void _initLightSensor() { // fungsi untuk inisialisasi sensor cahaya dan mendeteksi kondisi ruangan
     _lightSensor = Light();
     try {
       _lightSubscription = _lightSensor?.lightSensorStream.listen((int lux) {
         luxValue.value = lux;
-        if (lux < 15 && !isDarkRoomWarningShown) {
+        if (lux < 15 && !isDarkRoomWarningShown) { // Jika cahaya kurang dari 15 lux dan peringatan belum ditampilkan
           isDarkRoomWarningShown = true; 
           Get.snackbar('💡 Ruangan Terlalu Gelap', 'Warna foto mungkin terlihat berbeda di siang hari.', duration: const Duration(seconds: 4), backgroundColor: Colors.blueGrey.shade900, colorText: Colors.white, snackPosition: SnackPosition.TOP);
-        } else if (lux > 50 && isDarkRoomWarningShown) {
+        } else if (lux > 50 && isDarkRoomWarningShown) { // Jika cahaya sudah cukup terang dan peringatan sebelumnya sudah ditampilkan, reset flag
           isDarkRoomWarningShown = false; 
         }
       });
@@ -205,7 +205,7 @@ class EditorController extends GetxController {
     }
   }
 
-  void _onShakeDetected() {
+  void _onShakeDetected() { // Fungsi yang dipanggil saat guncangan terdeteksi
     // [PERBAIKAN] Cek rute halaman saat ini. 
     // Hanya eksekusi reset jika user benar-benar sedang berada di dalam Editor
     if (Get.currentRoute == AppRoutes.EDITOR) {
@@ -230,7 +230,7 @@ class EditorController extends GetxController {
       history.removeRange(currentIndex.value + 1, history.length);
     }
     history.add(EditorState(exposure: exposure.value, contrast: contrast.value, temperature: temperature.value, saturation: saturation.value, tint: tint.value, isBlackAndWhite: isBlackAndWhite.value));
-    currentIndex.value = history.length - 1;
+    currentIndex.value = history.length - 1; // history selalu bertambah di akhir, jadi indexnya adalah panjang - 1
   }
 
   void _applyState(EditorState state) {
@@ -324,7 +324,7 @@ class EditorController extends GetxController {
         
         if (currentDraftId.value.isNotEmpty) {
           await supabase.from('drafts').delete().eq('id', currentDraftId.value);
-          if (Get.isRegistered<DraftController>()) Get.find<DraftController>().loadDrafts();
+          if (Get.isRegistered<DraftController>()) Get.find<DraftController>().loadDrafts(); // draft yang sudah disimpan di cloud otomatis dihapus setelah diekspor ke galeri, karena diasumsikan user sudah tidak butuh lagi draft tersebut
         }
       }
     } catch (e) {
@@ -368,7 +368,7 @@ class EditorController extends GetxController {
     }
   }
 
-  void _processSavingDraft(String customName) async {
+  void _processSavingDraft(String customName) async { // fungsi untuk memproses penyimpanan draft dengan nama yang diberikan user
     Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
     String finalName = customName.isEmpty ? "Edit_${DateTime.now().day}-${DateTime.now().month}_${DateTime.now().hour}:${DateTime.now().minute}" : customName;
 
@@ -425,7 +425,7 @@ class EditorController extends GetxController {
     history.clear(); saveState(); 
   }
 
-  List<double> get combinedColorMatrix {
+  List<double> get combinedColorMatrix { // Menggabungkan semua efek menjadi satu matriks warna untuk efisiensi rendering
     double b = exposure.value; double c = 1.0 + (contrast.value / 250.0); double contrastOffset = 128.0 * (1.0 - c); 
     double baseSat = isBlackAndWhite.value ? -100.0 : saturation.value; double s = 1.0 + (baseSat / 100.0);
     double tempAdjust = temperature.value / 250.0; double tintAdjust = tint.value / 250.0; 
@@ -440,7 +440,7 @@ class EditorController extends GetxController {
     ];
   }
 
-  Future<void> resumeDraft(Map<String, dynamic> data) async {
+  Future<void> resumeDraft(Map<String, dynamic> data) async { // fungsi untuk memuat draft yang sudah disimpan di cloud dan membuka editor dengan pengaturan yang sesuai
     Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
     try {
       String fileName = data['image_url'].split('/').last;
@@ -473,7 +473,7 @@ class EditorController extends GetxController {
 // ==========================================
 // DRAFT CONTROLLER
 // ==========================================
-class DraftController extends GetxController {
+class DraftController extends GetxController { // Controller khusus untuk mengelola daftar draft yang disimpan di cloud, termasuk fitur pencarian, pemilihan, penghapusan, dan penggantian nama
   final supabase = Supabase.instance.client;
   final Box authBox = Hive.box('authBox');
   
