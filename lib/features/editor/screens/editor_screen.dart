@@ -44,6 +44,11 @@ class EditorScreen extends StatelessWidget {
         ),
         
         actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline, color: Colors.white), 
+            tooltip: 'Tampilkan/Sembunyikan Info',
+            onPressed: () => controller.isMetadataVisible.toggle(),
+          ),
           IconButton(icon: const Icon(Icons.undo, color: Colors.white70), onPressed: controller.undo, tooltip: 'UNDO'), 
           IconButton(icon: const Icon(Icons.redo, color: Colors.white70), onPressed: controller.redo, tooltip: 'REDO'),
           
@@ -72,18 +77,52 @@ class EditorScreen extends StatelessWidget {
                   if (imageFile == null) return const SizedBox.shrink(); 
 
                   return Center(
-                    child: RepaintBoundary(
-                      key: controller.exportKey, 
-                      child: ColorFiltered(
-                        colorFilter: ColorFilter.matrix(controller.combinedColorMatrix),
-                        child: Image.file(
-                          imageFile, 
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) => const Center(
-                            child: Text("Failed to load image", style: TextStyle(color: Colors.white54)),
+                    child: Stack(
+                      alignment: Alignment.topLeft, // Posisi teks di kiri atas
+                      children: [
+                        RepaintBoundary(
+                          key: controller.exportKey, 
+                          child: ColorFiltered(
+                            colorFilter: ColorFilter.matrix(controller.combinedColorMatrix),
+                            child: Image.file(
+                              imageFile, 
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) => const Center(
+                                child: Text("Failed to load image", style: TextStyle(color: Colors.white54)),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        
+                        // [BARU] WIDGET METADATA (Menyerupai Screenshot Capt)
+                        if (controller.isMetadataVisible.value && controller.imageMetadata.value.isNotEmpty)
+                          Positioned(
+                            top: 8,
+                            left: 8,
+                            child: IgnorePointer(
+                              child: Container(
+                                // Padding super tipis agar rapi
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.4), 
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  controller.imageMetadata.value,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 7.5, // [DIPERBARUI] Jauh lebih kecil!
+                                    height: 1.1,   // [DIPERBARUI] Jarak antar baris super rapat!
+                                    letterSpacing: 0.1, 
+                                    shadows: [
+                                      Shadow(blurRadius: 1.0, color: Colors.black, offset: Offset(1, 1))
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   );
                 }),

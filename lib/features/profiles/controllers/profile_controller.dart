@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart'; 
 import 'package:supabase_flutter/supabase_flutter.dart'; 
+import 'package:local_auth/local_auth.dart'; // [BARU] Wajib di-import untuk verifikasi Sidik Jari
 import '../../../core/routes/app_routes.dart';
 import '../../editor/controllers/editor_controller.dart';
 import 'dart:convert';
@@ -37,7 +38,7 @@ class ProfileController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadUserData(); // [DIUBAH] Menghilangkan underscore
+    loadUserData(); 
     _loadAppSettings(); 
   }
 
@@ -46,9 +47,61 @@ class ProfileController extends GetxController {
     selectedColorBlindType.value = authBox.get('color_blind_type', defaultValue: 'Normal');
   }
 
-  void toggleFingerprint(bool value) {
-    isFingerprintEnabled.value = value;
-    authBox.put('fingerprint_enabled', value);
+  // ==========================================
+  // [DIUBAH] LOGIKA SAKLAR SIDIK JARI PINTAR
+  // ==========================================
+  Future<void> toggleFingerprint(bool value) async {
+    if (value == false) {
+      // 1. JIKA USER MENONAKTIFKAN FITUR
+      isFingerprintEnabled.value = false;
+      authBox.put('fingerprint_enabled', false);
+      Get.snackbar(
+        'Dinonaktifkan 🔓', 
+        'Login Sidik Jari telah dimatikan.', 
+        snackPosition: SnackPosition.BOTTOM, 
+        backgroundColor: Colors.blueGrey.shade900, 
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    } else {
+      // 2. JIKA USER INGIN MENGAKTIFKAN FITUR
+      final LocalAuthentication localAuth = LocalAuthentication();
+      try {
+        // Cek dulu apakah HP-nya mendukung sidik jari
+        bool canCheckBiometrics = await localAuth.canCheckBiometrics;
+        bool isSupported = await localAuth.isDeviceSupported();
+
+        if (!canCheckBiometrics || !isSupported) {
+          Get.snackbar('Gagal', 'Perangkat ini tidak mendukung sensor biometrik.', backgroundColor: Colors.red.shade900, colorText: Colors.white);
+          return;
+        }
+
+        // Minta user memindai jarinya sebagai bukti
+        bool didAuthenticate = await localAuth.authenticate(
+          localizedReason: 'Pindai sidik jari Anda untuk mengaktifkan fitur ini',
+          biometricOnly: true,
+        );
+
+        if (didAuthenticate) {
+          // Jika sidik jari cocok, nyalakan fiturnya
+          isFingerprintEnabled.value = true;
+          authBox.put('fingerprint_enabled', true);
+          Get.snackbar(
+            'Diaktifkan 🔒', 
+            'Login Sidik Jari berhasil diaktifkan.', 
+            snackPosition: SnackPosition.BOTTOM, 
+            backgroundColor: Colors.green.shade800, 
+            colorText: Colors.white,
+            duration: const Duration(seconds: 2),
+          );
+        } else {
+          // Jika dibatalkan atau sidik jari salah, beri tahu user (Saklar akan tetap mati otomatis)
+          Get.snackbar('Dibatalkan', 'Verifikasi sidik jari gagal atau dibatalkan.', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.orange.shade900, colorText: Colors.white);
+        }
+      } catch (e) {
+        Get.snackbar('Error', 'Terjadi kesalahan sensor: $e', backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    }
   }
 
   void changeColorBlindType(String? newValue) {
@@ -60,7 +113,6 @@ class ProfileController extends GetxController {
     }
   }
 
-  // --- [DIUBAH] Menghilangkan underscore agar bisa di-refresh dari AuthController ---
   void loadUserData() {
     String currentEmail = authBox.get('currentUser', defaultValue: '');
     
@@ -79,29 +131,22 @@ class ProfileController extends GetxController {
     } else {
       userEmail.value = 'Tidak ada email';
       userName.value = 'Guest';
-      profileImageUrl.value = ''; // Hapus foto profil jika logout
+      profileImageUrl.value = ''; 
     }
   }
 
-  // --- [BARU] ALAT ENKRIPSI PASSWORD ---
   String _hashPassword(String password) {
     var bytes = utf8.encode(password);
     var digest = sha256.convert(bytes);
     return digest.toString();
   }
 
-  // --- PERBAIKAN: GANTI NAMA KE HIVE ---
   Future<void> changeUsername(String newName) async {
     if (newName.trim().isEmpty) return;
     try {
-      // Ambil data user dari Hive
       var userData = authBox.get(userEmail.value) ?? {};
-      
-      // Ubah namanya dan simpan kembali ke Hive
       userData['name'] = newName;
       await authBox.put(userEmail.value, userData);
-      
-      // Update tampilan layar
       userName.value = newName;
       
       Get.snackbar('Berhasil 🎉', 'Username diubah menjadi $newName', backgroundColor: Colors.green.shade800, colorText: Colors.white);
@@ -110,14 +155,10 @@ class ProfileController extends GetxController {
     }
   }
 
-  // --- PERBAIKAN: GANTI PASSWORD KE HIVE ---
   Future<void> changePassword(String newPassword) async {
     if (newPassword.trim().isEmpty) return;
     try {
-      // Ambil data user dari Hive
       var userData = authBox.get(userEmail.value) ?? {};
-      
-      // Enkripsi password barunya, lalu simpan ke Hive
       userData['password'] = _hashPassword(newPassword);
       await authBox.put(userEmail.value, userData);
       
@@ -132,22 +173,16 @@ class ProfileController extends GetxController {
     try {
       isFeedbacksLoading.value = true;
       
-      // 1. Ambil SEMUA feedback milik user ini dari Supabase (diurutkan dari yang terbaru)
       final response = await supabase
           .from('feedbacks') 
           .select()
           .eq('user_email', userEmail.value)
           .order('created_at', ascending: false); 
       
-      // 2. Ubah data dari database menjadi List
       final List<Map<String, dynamic>> allUserFeedbacks = List<Map<String, dynamic>>.from(response);
 
-      // 3. FILTERING CERDAS (Hanya masukkan ke Profil jika ada kata "saran" atau "kesan")
       myAllFeedbacks.value = allUserFeedbacks.where((feedback) {
-        // Ubah teks jadi huruf kecil semua agar filternya kebal terhadap huruf kapital (Saran, SARAN, saran)
         final String content = (feedback['content'] ?? '').toString().toLowerCase();
-        
-        // Kembalikan nilai true jika mengandung kata "saran" ATAU "kesan"
         return content.contains('saran') || content.contains('kesan');
       }).toList();
 
@@ -159,7 +194,6 @@ class ProfileController extends GetxController {
   }
 
   Future<void> pickAndUploadImage() async {
-    // ... Kodingan upload image tetap sama persis ...
     final picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     if (image == null) return;
@@ -194,7 +228,7 @@ class ProfileController extends GetxController {
 
   Future<void> logout() async {
     await authBox.delete('currentUser');
-    loadUserData(); // [BARU] Kembalikan status ke Guest setelah logout
+    loadUserData(); 
     try {
       Get.delete<EditorController>(force: true);
     } catch(e) {}

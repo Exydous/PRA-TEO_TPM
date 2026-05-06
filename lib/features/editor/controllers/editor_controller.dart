@@ -14,6 +14,8 @@ import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../../core/routes/app_routes.dart';
+import 'package:exif/exif.dart'; // [BARU] Pembaca EXIF
+import 'package:intl/intl.dart'; // [BARU] Penata format tanggal
 
 class EditorState {
   final double exposure;
@@ -64,6 +66,9 @@ class EditorController extends GetxController {
   
   var activePresetName = ''.obs; // [BARU] Mengingat nama preset yang aktif
   Timer? _expiryTimer;
+
+  var imageMetadata = ''.obs; // Menyimpan teks metadata
+  var isMetadataVisible = false.obs; // Saklar untuk menampilkan/menyembunyikan teks di layar
 
   final ImagePicker _picker = ImagePicker();
   final GlobalKey exportKey = GlobalKey();
@@ -301,6 +306,7 @@ class EditorController extends GetxController {
         currentDraftId.value = ''; 
         oldImageUrl.value = '';
         resetAllSettings(); 
+        await extractMetadata(selectedImage.value!, originalName: image.name);
         Get.toNamed(AppRoutes.EDITOR); 
       }
     } catch (e) {
@@ -466,6 +472,100 @@ class EditorController extends GetxController {
     } catch (e) {
       Get.back(); 
       Get.snackbar('Error', 'Failed to download draft from cloud: $e', backgroundColor: Colors.red, colorText: Colors.white);
+    }
+  }
+
+  // --- [DIPERBARUI] MESIN PEMBACA METADATA / EXIF (DENGAN NAMA KAMERA) ---
+  Future<void> extractMetadata(File file, {String? originalName}) async {
+    try {
+      final fileName = originalName ?? file.path.split('/').last;
+      final bytes = await file.readAsBytes();
+      final tags = await readExifFromBytes(bytes);
+
+      String resolution = "";
+      String cameraSettings = "";
+      String dateFormatted = "";
+      String cameraName = "Unknown Camera"; // [BARU] Default jika tidak terdeteksi
+
+      if (tags.isNotEmpty) {
+        // 1. [BARU] CARI NAMA DAN MEREK KAMERA
+        String make = tags['Image Make']?.toString().trim() ?? tags['EXIF Make']?.toString().trim() ?? '';
+        String model = tags['Image Model']?.toString().trim() ?? tags['EXIF Model']?.toString().trim() ?? '';
+        
+        if (make.isNotEmpty && model.isNotEmpty) {
+           cameraName = "$model, $make"; // Contoh: ILCE-6000, SONY
+        } else if (make.isNotEmpty) {
+           cameraName = make; // Jika hanya ada merek
+        } else if (model.isNotEmpty) {
+           cameraName = model; // Jika hanya ada tipe
+        }
+
+        // 2. CARI TANGGAL ASLI FOTO DIAMBIL
+        if (tags.containsKey('EXIF DateTimeOriginal')) {
+          String exifDate = tags['EXIF DateTimeOriginal']!.toString();
+          try {
+            DateTime parsedDate = DateFormat("yyyy:MM:dd HH:mm:ss").parse(exifDate);
+            dateFormatted = DateFormat('d MMM yyyy | hh:mm:ss a').format(parsedDate);
+          } catch (e) {
+            dateFormatted = exifDate;
+          }
+        }
+
+        // 3. CARI RESOLUSI
+        final width = tags['EXIF ExifImageWidth']?.toString() ?? tags['Image ImageWidth']?.toString() ?? '';
+        final height = tags['EXIF ExifImageLength']?.toString() ?? tags['Image ImageLength']?.toString() ?? '';
+        if (width.isNotEmpty && height.isNotEmpty) {
+          resolution = "$width X $height";
+        }
+
+        // 4. CARI PENGATURAN KAMERA (f/14.0  1/125s  ISO100)
+        final exposureTime = tags['EXIF ExposureTime']?.toString() ?? '';
+        String fNumber = tags['EXIF FNumber']?.toString() ?? '';
+        final iso = tags['EXIF ISOSpeedRatings']?.toString() ?? '';
+
+        if (fNumber.contains('/')) {
+          var parts = fNumber.split('/');
+          if (parts.length == 2 && double.tryParse(parts[1]) != 0) {
+            double val = double.parse(parts[0]) / double.parse(parts[1]);
+            fNumber = val.toStringAsFixed(1); 
+          }
+        }
+
+        List<String> settings = [];
+        if (fNumber.isNotEmpty) settings.add("f/$fNumber");
+        if (exposureTime.isNotEmpty) settings.add("${exposureTime}s");
+        if (iso.isNotEmpty) settings.add("ISO$iso");
+        
+        if (settings.isNotEmpty) {
+          cameraSettings = settings.join('  '); 
+        }
+      }
+
+      // Fallback (Cadangan) jika tidak ada data dari EXIF
+      if (dateFormatted.isEmpty) {
+        final lastModified = await file.lastModified();
+        dateFormatted = DateFormat('d MMM yyyy | hh:mm:ss a').format(lastModified);
+      }
+      if (resolution.isEmpty) {
+        final decodedImage = await decodeImageFromList(bytes);
+        resolution = "${decodedImage.width} X ${decodedImage.height}";
+      }
+
+      // 5. SUSUN RAPI KESELURUHAN DATA
+      List<String> lines = [];
+      lines.add(cameraName); // [BARU] Letakkan Nama Kamera di baris paling atas
+      if (cameraSettings.isNotEmpty) lines.add(cameraSettings);
+      if (resolution.isNotEmpty) lines.add(resolution);
+      lines.add(fileName);
+      lines.add(dateFormatted);
+
+      // Gabungkan semua teks dengan enter (\n)
+      imageMetadata.value = lines.join('\n'); 
+      isMetadataVisible.value = true; 
+
+    } catch (e) {
+      imageMetadata.value = "Metadata tidak tersedia";
+      isMetadataVisible.value = true;
     }
   }
 }
