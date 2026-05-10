@@ -38,7 +38,7 @@ class PresetStoreController extends GetxController {
       
       presets.value = List<Map<String, dynamic>>.from(response);
     } catch (e) {
-      debugPrint("Error Fetching Presets: $e");
+      debugPrint("Error Fetching Presets");
       Get.snackbar(
         "Kesalahan Jaringan", 
         "Gagal memuat preset. Pastikan internetmu stabil.",
@@ -113,7 +113,7 @@ class PresetStoreController extends GetxController {
     } catch (e) {
       Get.snackbar(
         'Database Error',
-        'Gagal menyimpan: $e',
+        'Gagal menyimpan',
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade900,
         colorText: Colors.white,

@@ -99,7 +99,7 @@ class ProfileController extends GetxController {
           Get.snackbar('Dibatalkan', 'Verifikasi sidik jari gagal atau dibatalkan.', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.orange.shade900, colorText: Colors.white);
         }
       } catch (e) {
-        Get.snackbar('Error', 'Terjadi kesalahan sensor: $e', backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar('Error', 'Terjadi kesalahan sensor', backgroundColor: Colors.red, colorText: Colors.white);
       }
     }
   }
@@ -151,7 +151,7 @@ class ProfileController extends GetxController {
       
       Get.snackbar('Berhasil 🎉', 'Username diubah menjadi $newName', backgroundColor: Colors.green.shade800, colorText: Colors.white);
     } catch (e) {
-      Get.snackbar('Gagal', 'Terjadi kesalahan: $e', backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar('Gagal', 'Terjadi kesalahan', backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 
@@ -164,7 +164,7 @@ class ProfileController extends GetxController {
       
       Get.snackbar('Berhasil 🔐', 'Password berhasil diperbarui', backgroundColor: Colors.green.shade800, colorText: Colors.white);
     } catch (e) {
-      Get.snackbar('Gagal', 'Terjadi kesalahan: $e', backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar('Gagal', 'Terjadi kesalahan', backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 
@@ -187,7 +187,7 @@ class ProfileController extends GetxController {
       }).toList();
 
     } catch (e) {
-      debugPrint("Gagal memuat feedback: $e");
+      debugPrint("Gagal memuat feedback");
     } finally {
       isFeedbacksLoading.value = false;
     }

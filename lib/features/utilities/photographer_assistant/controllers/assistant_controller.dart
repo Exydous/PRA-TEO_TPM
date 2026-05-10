@@ -88,7 +88,7 @@ class AssistantController extends GetxController {
       updateDisplayedTime();
       statusMessage.value = 'Rencana memotret siap di lokasimu!';
     } catch (e) {
-      statusMessage.value = 'Gagal memuat asisten: $e';
+      statusMessage.value = 'Gagal memuat asisten';
     } finally {
       isLoading.value = false;
     }
@@ -137,7 +137,7 @@ class AssistantController extends GetxController {
         Get.snackbar("Gagal", "Tidak dapat mengambil rute.");
       }
     } catch (e) {
-      Get.snackbar("Error", "Gagal memuat rute: $e");
+      Get.snackbar("Error", "Gagal memuat rute");
     }
   }
 }

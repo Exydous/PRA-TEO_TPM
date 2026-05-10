@@ -32,7 +32,7 @@ class FeedbackController extends GetxController {
           .order('created_at', ascending: false);
       feedbacks.value = List<Map<String, dynamic>>.from(response);
     } catch (e) {
-      debugPrint("Error fetch feedbacks: $e");
+      debugPrint("Error fetch feedbacks");
     } finally {
       isLoading.value = false;
     }
@@ -71,7 +71,7 @@ class FeedbackController extends GetxController {
       Get.snackbar('Berhasil', 'Pesanmu telah dikirim ke komunitas!', backgroundColor: Colors.green.shade800, colorText: Colors.white);
     } catch (e) {
       Get.back();
-      Get.snackbar('Error', 'Gagal mengirim pesan: $e', backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar('Error', 'Gagal mengirim pesan', backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 
@@ -86,7 +86,7 @@ class FeedbackController extends GetxController {
           .order('created_at', ascending: true); // Balasan terlama di atas
       replies.value = List<Map<String, dynamic>>.from(response);
     } catch (e) {
-      debugPrint("Error fetch replies: $e");
+      debugPrint("Error fetch replies");
     } finally {
       isRepliesLoading.value = false;
     }
@@ -112,7 +112,7 @@ class FeedbackController extends GetxController {
       });
       fetchReplies(feedbackId); // Langsung refresh balasan di layar
     } catch (e) {
-      Get.snackbar('Error', 'Gagal mengirim balasan: $e', backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar('Error', 'Gagal mengirim balasan', backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
   String? getUserPhoto(String? email) {

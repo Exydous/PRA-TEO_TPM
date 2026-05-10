@@ -75,7 +75,7 @@ class ColorMatchController extends GetxController {
       
       globalLeaderboard.value = List<Map<String, dynamic>>.from(data);
     } catch (e) {
-      debugPrint("Gagal mengambil leaderboard: $e");
+      debugPrint("Gagal mengambil leaderboard");
     } finally {
       isLoadingLeaderboard.value = false;
     }
@@ -138,7 +138,7 @@ class ColorMatchController extends GetxController {
         );
       });
     } catch (e) {
-      debugPrint("Gagal mengklaim hadiah preset: $e");
+      debugPrint("Gagal mengklaim hadiah preset");
     }
   }
 
@@ -162,7 +162,7 @@ class ColorMatchController extends GetxController {
       }
 
     } catch (e) {
-      debugPrint("Gagal kirim skor: $e");
+      debugPrint("Gagal kirim skor");
     }
   }
 

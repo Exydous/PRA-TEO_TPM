@@ -172,7 +172,7 @@ class EditorController extends GetxController {
       debugPrint("✅ Berhasil memuat ${ownedPresets.length} preset aktif dari Supabase");
       
     } catch (e) {
-      debugPrint("❌ Gagal memuat koleksi preset: $e");
+      debugPrint("❌ Gagal memuat koleksi preset");
     } finally {
       isPresetsLoading.value = false;
     }
@@ -206,7 +206,7 @@ class EditorController extends GetxController {
         }
       });
     } catch (e) {
-      debugPrint("Sensor Cahaya error: $e");
+      debugPrint("Sensor Cahaya error");
     }
   }
 
@@ -293,7 +293,7 @@ class EditorController extends GetxController {
         selectedImage.value = File(croppedFile.path);
       }
     } catch (e) {
-      Get.snackbar('Error', 'Gagal memotong gambar: $e');
+      Get.snackbar('Error', 'Gagal memotong gambar');
     }
   }
 
@@ -310,7 +310,7 @@ class EditorController extends GetxController {
         Get.toNamed(AppRoutes.EDITOR); 
       }
     } catch (e) {
-      Get.snackbar('Error', 'Gagal membuka galeri: $e');
+      Get.snackbar('Error', 'Gagal membuka galeri');
     }
   }
 
@@ -335,7 +335,7 @@ class EditorController extends GetxController {
       }
     } catch (e) {
       Get.back();
-      debugPrint("Error save image: $e");
+      debugPrint("Error save image");
     }
   }
 
@@ -394,7 +394,7 @@ class EditorController extends GetxController {
       Get.snackbar('💾 Saved', 'Draft "$finalName" saved successfully to Cloud.', backgroundColor: Colors.blueGrey.shade900, colorText: Colors.white, snackPosition: SnackPosition.TOP);
     } catch (e) {
       Get.back(); 
-      Get.snackbar('❌ Failed', 'Failed to save draft: $e', backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar('❌ Failed', 'Failed to save draft', backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 
@@ -471,7 +471,7 @@ class EditorController extends GetxController {
       Get.toNamed(AppRoutes.EDITOR); 
     } catch (e) {
       Get.back(); 
-      Get.snackbar('Error', 'Failed to download draft from cloud: $e', backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar('Error', 'Failed to download draft from cloud', backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 
@@ -613,7 +613,7 @@ class DraftController extends GetxController { // Controller khusus untuk mengel
       
       savedDrafts.value = List<Map<String, dynamic>>.from(response);
     } catch (e) {
-      debugPrint("Failed to fetch drafts: $e");
+      debugPrint("Failed to fetch drafts");
     }
   }
   
@@ -659,7 +659,7 @@ class DraftController extends GetxController { // Controller khusus untuk mengel
                 Get.snackbar('🗑️ Deleted', 'Draft successfully deleted from Cloud.', backgroundColor: Colors.blueGrey.shade900, colorText: Colors.white);
               } catch (e) {
                 Get.back();
-                Get.snackbar('Error', 'Failed to delete draft: $e', backgroundColor: Colors.red, colorText: Colors.white);
+                Get.snackbar('Error', 'Failed to delete draft', backgroundColor: Colors.red, colorText: Colors.white);
               }
             },
             child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.bold)),
