@@ -61,7 +61,7 @@ class EditorScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.check, color: AppColors.primary), // warna ikon save
             tooltip: 'Save to Gallery',
-            onPressed: controller.saveToGallery, 
+            onPressed: controller.showSaveDialog,
           ),
         ],
       ),

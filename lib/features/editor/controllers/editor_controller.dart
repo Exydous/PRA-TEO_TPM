@@ -306,7 +306,10 @@ class EditorController extends GetxController {
         currentDraftId.value = ''; 
         oldImageUrl.value = '';
         resetAllSettings(); 
+        
+        // Memanggil ekstrak metadata dengan nama file asli
         await extractMetadata(selectedImage.value!, originalName: image.name);
+        
         Get.toNamed(AppRoutes.EDITOR); 
       }
     } catch (e) {
@@ -314,28 +317,93 @@ class EditorController extends GetxController {
     }
   }
 
-  Future<void> saveToGallery() async {
+  // --- [BARU] FUNGSI MENAMPILKAN DIALOG NAMA FILE UNTUK SAVE KE GALERI ---
+  void showSaveDialog() {
+    String defaultName = "ProEditor_${DateTime.now().millisecondsSinceEpoch}";
+    
+    TextEditingController fileNameCtrl = TextEditingController(text: defaultName);
+
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Simpan ke Galeri', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Masukkan nama file (atau biarkan default):', style: TextStyle(color: Colors.white70, fontSize: 12)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: fileNameCtrl,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                filled: true, 
+                fillColor: Colors.black,
+                hintText: defaultName,
+                hintStyle: const TextStyle(color: Colors.white24),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF4FC3F7))),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(), 
+            child: const Text('Batal', style: TextStyle(color: Colors.white54))
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4FC3F7), foregroundColor: Colors.black),
+            onPressed: () {
+              Get.back(); // Tutup dialog
+              
+              String finalName = fileNameCtrl.text.trim().isEmpty ? defaultName : fileNameCtrl.text.trim();
+              saveToGallery(finalName); 
+            },
+            child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.bold)),
+          )
+        ],
+      )
+    );
+  }
+
+  // --- [DIPERBARUI] FUNGSI EXPORT KE GALERI DENGAN NAMA CUSTOM ---
+  Future<void> saveToGallery(String fileName) async {
     try {
       Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+      
       RenderRepaintBoundary boundary = exportKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
       ui.Image image = await boundary.toImage(pixelRatio: 3.0); 
       ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       Uint8List pngBytes = byteData!.buffer.asUint8List();
 
-      final result = await ImageGallerySaverPlus.saveImage(pngBytes, quality: 100, name: "PRA_TEO_${DateTime.now().millisecondsSinceEpoch}");
+      final result = await ImageGallerySaverPlus.saveImage(
+        pngBytes, 
+        quality: 100, 
+        name: fileName // Menyematkan nama file custom dari inputan user
+      );
+      
       Get.back(); 
 
       if (result['isSuccess']) {
-        Get.snackbar('📸 Berhasil!', 'Foto berhasil disimpan ke Galeri.', backgroundColor: Colors.green, colorText: Colors.white);
+        Get.snackbar(
+          '📸 Berhasil!', 
+          'Foto tersimpan sebagai $fileName', 
+          backgroundColor: Colors.green.shade800, 
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+        );
         
         if (currentDraftId.value.isNotEmpty) {
           await supabase.from('drafts').delete().eq('id', currentDraftId.value);
-          if (Get.isRegistered<DraftController>()) Get.find<DraftController>().loadDrafts(); // draft yang sudah disimpan di cloud otomatis dihapus setelah diekspor ke galeri, karena diasumsikan user sudah tidak butuh lagi draft tersebut
+          if (Get.isRegistered<DraftController>()) Get.find<DraftController>().loadDrafts(); 
         }
       }
     } catch (e) {
       Get.back();
-      debugPrint("Error save image");
+      Get.snackbar('Error', 'Terjadi kesalahan saat menyimpan: $e', backgroundColor: Colors.red.shade900, colorText: Colors.white);
+      debugPrint("Error save image: $e");
     }
   }
 
@@ -485,19 +553,19 @@ class EditorController extends GetxController {
       String resolution = "";
       String cameraSettings = "";
       String dateFormatted = "";
-      String cameraName = "Unknown Camera"; // [BARU] Default jika tidak terdeteksi
+      String cameraName = "Unknown Camera"; 
 
       if (tags.isNotEmpty) {
-        // 1. [BARU] CARI NAMA DAN MEREK KAMERA
+        // 1. CARI NAMA DAN MEREK KAMERA
         String make = tags['Image Make']?.toString().trim() ?? tags['EXIF Make']?.toString().trim() ?? '';
         String model = tags['Image Model']?.toString().trim() ?? tags['EXIF Model']?.toString().trim() ?? '';
         
         if (make.isNotEmpty && model.isNotEmpty) {
-           cameraName = "$model, $make"; // Contoh: ILCE-6000, SONY
+           cameraName = "$model, $make"; 
         } else if (make.isNotEmpty) {
-           cameraName = make; // Jika hanya ada merek
+           cameraName = make; 
         } else if (model.isNotEmpty) {
-           cameraName = model; // Jika hanya ada tipe
+           cameraName = model; 
         }
 
         // 2. CARI TANGGAL ASLI FOTO DIAMBIL
@@ -518,7 +586,7 @@ class EditorController extends GetxController {
           resolution = "$width X $height";
         }
 
-        // 4. CARI PENGATURAN KAMERA (f/14.0  1/125s  ISO100)
+        // 4. CARI PENGATURAN KAMERA 
         final exposureTime = tags['EXIF ExposureTime']?.toString() ?? '';
         String fNumber = tags['EXIF FNumber']?.toString() ?? '';
         final iso = tags['EXIF ISOSpeedRatings']?.toString() ?? '';
@@ -553,7 +621,7 @@ class EditorController extends GetxController {
 
       // 5. SUSUN RAPI KESELURUHAN DATA
       List<String> lines = [];
-      lines.add(cameraName); // [BARU] Letakkan Nama Kamera di baris paling atas
+      lines.add(cameraName); 
       if (cameraSettings.isNotEmpty) lines.add(cameraSettings);
       if (resolution.isNotEmpty) lines.add(resolution);
       lines.add(fileName);
@@ -573,7 +641,7 @@ class EditorController extends GetxController {
 // ==========================================
 // DRAFT CONTROLLER
 // ==========================================
-class DraftController extends GetxController { // Controller khusus untuk mengelola daftar draft yang disimpan di cloud, termasuk fitur pencarian, pemilihan, penghapusan, dan penggantian nama
+class DraftController extends GetxController { 
   final supabase = Supabase.instance.client;
   final Box authBox = Hive.box('authBox');
   
